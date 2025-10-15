@@ -13,7 +13,17 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['Poppins', 'sans-serif'],
+      },
       colors: {
+        xpace: {
+          purple: "hsl(var(--xpace-purple))",
+          blue: "hsl(var(--xpace-blue))",
+          orange: "hsl(var(--xpace-orange))",
+          gray: "hsl(var(--xpace-gray))",
+          'light-gray': "hsl(var(--xpace-light-gray))",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
