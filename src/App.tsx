@@ -38,6 +38,8 @@ import TeacherClasses from "./pages/teacher/TeacherClasses";
 import QRCodeDisplay from "./pages/teacher/QRCodeDisplay";
 
 import GuardianStudents from "./pages/guardian/GuardianStudents";
+import GuardianAttendance from "./pages/guardian/GuardianAttendance";
+import GuardianPayments from "./pages/guardian/GuardianPayments";
 
 import StudentSchedule from "./pages/student/StudentSchedule";
 import QRCodeScanner from "./pages/student/QRCodeScanner";
@@ -195,8 +197,23 @@ const App = () => (
 
               {/* Guardian routes */}
               <Route path="/responsavel/alunos" element={
-                <ProtectedRoute allowedRoles={['parent']}>
+                <ProtectedRoute allowedRoles={['guardian']}>
                   <GuardianStudents />
+                </ProtectedRoute>
+              } />
+              <Route path="/guardian/students" element={
+                <ProtectedRoute allowedRoles={['guardian']}>
+                  <GuardianStudents />
+                </ProtectedRoute>
+              } />
+              <Route path="/guardian/attendance" element={
+                <ProtectedRoute allowedRoles={['guardian']}>
+                  <GuardianAttendance />
+                </ProtectedRoute>
+              } />
+              <Route path="/guardian/payments" element={
+                <ProtectedRoute allowedRoles={['guardian']}>
+                  <GuardianPayments />
                 </ProtectedRoute>
               } />
 

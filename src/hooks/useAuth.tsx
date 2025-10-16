@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 import { toast } from '@/hooks/use-toast';
 
-export type UserRole = 'admin' | 'teacher' | 'parent' | 'student';
+export type UserRole = 'admin' | 'teacher' | 'parent' | 'student' | 'guardian';
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -176,6 +176,8 @@ export function useAuth() {
         return '/professor/turmas';
       case 'parent':
         return '/responsavel/alunos';
+      case 'guardian':
+        return '/guardian/students';
       case 'student':
         return '/aluno/agenda';
       default:

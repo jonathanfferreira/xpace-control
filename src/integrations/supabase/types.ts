@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          badge_color: string
+          created_at: string
+          description: string
+          icon: string
+          id: string
+          name: string
+          points_required: number
+        }
+        Insert: {
+          badge_color?: string
+          created_at?: string
+          description: string
+          icon: string
+          id?: string
+          name: string
+          points_required: number
+        }
+        Update: {
+          badge_color?: string
+          created_at?: string
+          description?: string
+          icon?: string
+          id?: string
+          name?: string
+          points_required?: number
+        }
+        Relationships: []
+      }
       attendances: {
         Row: {
           attendance_date: string
@@ -640,6 +670,42 @@ export type Database = {
         }
         Relationships: []
       }
+      student_achievements: {
+        Row: {
+          achievement_id: string
+          id: string
+          student_id: string
+          unlocked_at: string
+        }
+        Insert: {
+          achievement_id: string
+          id?: string
+          student_id: string
+          unlocked_at?: string
+        }
+        Update: {
+          achievement_id?: string
+          id?: string
+          student_id?: string
+          unlocked_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_achievements_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_guardians: {
         Row: {
           created_at: string
@@ -669,6 +735,38 @@ export type Database = {
           },
           {
             foreignKeyName: "student_guardians_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_points: {
+        Row: {
+          created_at: string
+          id: string
+          points: number
+          reason: string
+          student_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          points?: number
+          reason: string
+          student_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          points?: number
+          reason?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_points_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
@@ -853,6 +951,50 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_messages: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          message: string
+          phone: string
+          sent_at: string | null
+          status: string
+          student_id: string | null
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message: string
+          phone: string
+          sent_at?: string | null
+          status?: string
+          student_id?: string | null
+          type: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message?: string
+          phone?: string
+          sent_at?: string | null
+          status?: string
+          student_id?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -883,7 +1025,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "student" | "parent" | "teacher"
+      app_role: "admin" | "student" | "parent" | "teacher" | "guardian"
       payment_method: "boleto" | "pix" | "credit_card"
       payment_status: "pending" | "paid" | "overdue" | "cancelled"
     }
@@ -1013,7 +1155,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "student", "parent", "teacher"],
+      app_role: ["admin", "student", "parent", "teacher", "guardian"],
       payment_method: ["boleto", "pix", "credit_card"],
       payment_status: ["pending", "paid", "overdue", "cancelled"],
     },
