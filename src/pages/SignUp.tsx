@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
+import { trackSignupCompleted } from '@/lib/analytics';
 import logo from '@/assets/xpace-logo.png';
 
 export default function SignUp() {
@@ -35,6 +36,8 @@ export default function SignUp() {
 
     try {
       await signUp(email, password, fullName, phone);
+      // Track signup completion
+      trackSignupCompleted(email, email);
       navigate('/entrar');
     } catch (error) {
       // Error handled by useAuth

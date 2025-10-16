@@ -1,11 +1,14 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import { DemoProvider } from "@/contexts/DemoContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { initGA4, initMetaPixel, trackPageView } from "@/lib/analytics";
 
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -20,6 +23,8 @@ import Units from "./pages/Units";
 import Settings from "./pages/Settings";
 import Reports from "./pages/Reports";
 import Events from "./pages/Events";
+import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import NotFound from "./pages/NotFound";
 
 import SignIn from "./pages/SignIn";
@@ -37,14 +42,34 @@ import QRCodeScanner from "./pages/student/QRCodeScanner";
 
 const queryClient = new QueryClient();
 
+// Analytics tracking component
+function AnalyticsTracker() {
+  const location = useLocation();
+
+  useEffect(() => {
+    // Initialize analytics on mount
+    initGA4();
+    initMetaPixel();
+  }, []);
+
+  useEffect(() => {
+    // Track page views on route change
+    trackPageView(location.pathname, document.title);
+  }, [location]);
+
+  return null;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-      <DemoProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+    <HelmetProvider>
+      <ThemeProvider>
+        <DemoProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <AnalyticsTracker />
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<Index />} />
@@ -53,6 +78,8 @@ const App = () => (
               <Route path="/recuperar" element={<ResetPassword />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/pricing" element={<Pricing />} />
+              <Route path="/termos" element={<TermsOfService />} />
+              <Route path="/privacidade" element={<PrivacyPolicy />} />
 
               {/* Admin routes */}
               <Route path="/dashboard" element={
@@ -98,6 +125,11 @@ const App = () => (
               <Route path="/payments" element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <Payments />
+                </ProtectedRoute>
+              } />
+              <Route path="/notificacoes" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <Notifications />
                 </ProtectedRoute>
               } />
               <Route path="/notifications" element={
@@ -179,6 +211,7 @@ const App = () => (
         </TooltipProvider>
       </DemoProvider>
     </ThemeProvider>
+    </HelmetProvider>
   </QueryClientProvider>
 );
 

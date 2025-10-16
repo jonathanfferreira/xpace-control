@@ -1,0 +1,18 @@
+{
+  "name": "Xpace Control",
+  "short_name": "Xpace",
+  "description": "Sistema de gestão completo para escolas de dança",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#6324b2",
+  "theme_color": "#6324b2",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
