@@ -108,6 +108,7 @@ export type Database = {
           schedule_day: string
           schedule_time: string
           school_id: string
+          unit_id: string | null
           updated_at: string
         }
         Insert: {
@@ -122,6 +123,7 @@ export type Database = {
           schedule_day: string
           schedule_time: string
           school_id: string
+          unit_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -136,6 +138,7 @@ export type Database = {
           schedule_day?: string
           schedule_time?: string
           school_id?: string
+          unit_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -144,6 +147,13 @@ export type Database = {
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "classes_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "school_units"
             referencedColumns: ["id"]
           },
         ]
@@ -183,6 +193,44 @@ export type Database = {
           whatsapp?: string
         }
         Relationships: []
+      }
+      notifications_log: {
+        Row: {
+          id: string
+          message: string
+          notification_type: string
+          sent_at: string
+          status: string | null
+          student_id: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          message: string
+          notification_type: string
+          sent_at?: string
+          status?: string | null
+          student_id?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          message?: string
+          notification_type?: string
+          sent_at?: string
+          status?: string | null
+          student_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_log_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payments: {
         Row: {
@@ -244,28 +292,81 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          email_on_absence: boolean | null
+          email_on_late_payment: boolean | null
           full_name: string
           id: string
+          notifications_enabled: boolean | null
           phone: string | null
           updated_at: string
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          email_on_absence?: boolean | null
+          email_on_late_payment?: boolean | null
           full_name: string
           id: string
+          notifications_enabled?: boolean | null
           phone?: string | null
           updated_at?: string
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
+          email_on_absence?: boolean | null
+          email_on_late_payment?: boolean | null
           full_name?: string
           id?: string
+          notifications_enabled?: boolean | null
           phone?: string | null
           updated_at?: string
         }
         Relationships: []
+      }
+      school_units: {
+        Row: {
+          active: boolean | null
+          address: string | null
+          city: string | null
+          created_at: string
+          id: string
+          name: string
+          phone: string | null
+          school_id: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean | null
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          phone?: string | null
+          school_id: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean | null
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          school_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "school_units_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       schools: {
         Row: {
@@ -320,6 +421,7 @@ export type Database = {
           phone: string | null
           photo_url: string | null
           school_id: string
+          unit_id: string | null
           updated_at: string
         }
         Insert: {
@@ -335,6 +437,7 @@ export type Database = {
           phone?: string | null
           photo_url?: string | null
           school_id: string
+          unit_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -350,6 +453,7 @@ export type Database = {
           phone?: string | null
           photo_url?: string | null
           school_id?: string
+          unit_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -358,6 +462,13 @@ export type Database = {
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "students_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "school_units"
             referencedColumns: ["id"]
           },
         ]

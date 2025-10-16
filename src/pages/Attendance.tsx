@@ -7,8 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Calendar, QrCode } from "lucide-react";
+import { Calendar, QrCode, Download } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
+import { useDemo } from "@/contexts/DemoContext";
 
 type Attendance = Database["public"]["Tables"]["attendances"]["Row"] & {
   students?: { full_name: string };
@@ -17,8 +18,10 @@ type Attendance = Database["public"]["Tables"]["attendances"]["Row"] & {
 
 export default function Attendance() {
   const navigate = useNavigate();
+  const { isDemoMode } = useDemo();
   const [attendances, setAttendances] = useState<Attendance[]>([]);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [isQRDialogOpen, setIsQRDialogOpen] = useState(false);
   const [qrInput, setQrInput] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
@@ -104,6 +107,49 @@ export default function Attendance() {
     }
   };
 
+  const handleExport = async () => {
+    if (isDemoMode) {
+      toast.success("Relatório exportado! (demo)");
+      return;
+    }
+
+    setExporting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/export-report`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ reportType: "attendances" }),
+        }
+      );
+
+      if (!response.ok) throw new Error("Erro ao exportar");
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `relatorio_presencas_${new Date().toISOString().split("T")[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success("Relatório exportado com sucesso!");
+    } catch (error) {
+      toast.error("Erro ao exportar relatório");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   if (loading) {
     return (
       <AppLayout>
@@ -118,15 +164,21 @@ export default function Attendance() {
     <AppLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold">Presenças</h1>
             <p className="text-muted-foreground">Gerencie a presença dos alunos</p>
           </div>
-          <Button className="gradient-xpace" onClick={() => setIsQRDialogOpen(true)}>
-            <QrCode className="h-4 w-4 mr-2" />
-            Marcar Presença
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleExport} disabled={exporting}>
+              <Download className="h-4 w-4 mr-2" />
+              {exporting ? "Exportando..." : "Exportar CSV"}
+            </Button>
+            <Button className="gradient-xpace" onClick={() => setIsQRDialogOpen(true)}>
+              <QrCode className="h-4 w-4 mr-2" />
+              Marcar Presença
+            </Button>
+          </div>
         </div>
 
         {/* Date Selector */}

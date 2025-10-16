@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, GraduationCap, CheckSquare, CreditCard, Settings, LogOut, Menu, X } from "lucide-react";
+import { LayoutDashboard, Users, GraduationCap, CheckSquare, CreditCard, Settings, LogOut, Menu, X, Bell, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -13,6 +13,8 @@ const menuItems = [
   { name: "Turmas", path: "/classes", icon: GraduationCap },
   { name: "Presenças", path: "/attendance", icon: CheckSquare },
   { name: "Pagamentos", path: "/payments", icon: CreditCard },
+  { name: "Notificações", path: "/notifications", icon: Bell },
+  { name: "Unidades", path: "/units", icon: Building2 },
   { name: "Configurações", path: "/settings", icon: Settings },
 ];
 

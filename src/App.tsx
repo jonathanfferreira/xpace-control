@@ -12,6 +12,8 @@ import Students from "./pages/Students";
 import Classes from "./pages/Classes";
 import Attendance from "./pages/Attendance";
 import Payments from "./pages/Payments";
+import Notifications from "./pages/Notifications";
+import Units from "./pages/Units";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
@@ -33,6 +35,8 @@ const App = () => (
             <Route path="/classes" element={<Classes />} />
             <Route path="/attendance" element={<Attendance />} />
             <Route path="/payments" element={<Payments />} />
+            <Route path="/notifications" element={<Notifications />} />
+            <Route path="/units" element={<Units />} />
             <Route path="/settings" element={<Settings />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
