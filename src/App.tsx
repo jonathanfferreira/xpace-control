@@ -18,6 +18,7 @@ import Payments from "./pages/Payments";
 import Notifications from "./pages/Notifications";
 import Units from "./pages/Units";
 import Settings from "./pages/Settings";
+import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 
 import SignIn from "./pages/SignIn";
@@ -121,6 +122,11 @@ const App = () => (
               <Route path="/planos" element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <Pricing />
+                </ProtectedRoute>
+              } />
+              <Route path="/relatorios" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <Reports />
                 </ProtectedRoute>
               } />
               <Route path="/leads" element={

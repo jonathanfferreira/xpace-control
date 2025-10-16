@@ -6,6 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, GraduationCap, CheckSquare, TrendingUp, DollarSign } from "lucide-react";
 import { useDemo } from "@/contexts/DemoContext";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { FrequencyHeatmap } from "@/components/dashboard/FrequencyHeatmap";
+import { TopClassesCard } from "@/components/dashboard/TopClassesCard";
+import { ChurnIndicatorCard } from "@/components/dashboard/ChurnIndicatorCard";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -19,6 +22,15 @@ export default function Dashboard() {
     estimatedRevenue: 0,
   });
   const [weeklyAttendanceData, setWeeklyAttendanceData] = useState<Array<{ day: string; presenças: number }>>([]);
+  const [heatmapData, setHeatmapData] = useState<Array<{ day: string; hours: { [hour: string]: number } }>>([]);
+  const [topClasses, setTopClasses] = useState<Array<{ name: string; enrolled: number; capacity: number; percentage: number }>>([]);
+  const [churnData, setChurnData] = useState({
+    last30Days: 0,
+    last60Days: 0,
+    totalStudents: 0,
+    percentage30: 0,
+    percentage60: 0,
+  });
 
   useEffect(() => {
     if (isDemoMode) {
@@ -67,7 +79,8 @@ export default function Dashboard() {
       // Get total students
       const { count: studentsCount } = await supabase
         .from("students")
-        .select("*", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true })
+        .eq("active", true);
 
       // Get total classes
       const { count: classesCount } = await supabase
@@ -107,6 +120,61 @@ export default function Dashboard() {
         return { day, presenças: dayAttendances };
       });
 
+      // Generate heatmap data
+      const days = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+      const hours = ["6h", "8h", "10h", "12h", "14h", "16h", "18h", "20h"];
+      const heatmap = days.map((day) => {
+        const hoursData: { [hour: string]: number } = {};
+        hours.forEach((hour) => {
+          hoursData[hour] = Math.floor(Math.random() * 8); // Mock data for now
+        });
+        return { day, hours: hoursData };
+      });
+
+      // Get top 5 classes by occupation
+      const { data: classesData } = await supabase
+        .from("classes")
+        .select(`
+          id,
+          name,
+          max_students,
+          enrollments(count)
+        `)
+        .limit(5);
+
+      const topClassesData = (classesData || []).map((c: any) => ({
+        name: c.name,
+        enrolled: c.enrollments?.[0]?.count || 0,
+        capacity: c.max_students || 30,
+        percentage: ((c.enrollments?.[0]?.count || 0) / (c.max_students || 30)) * 100,
+      })).sort((a, b) => b.percentage - a.percentage);
+
+      // Calculate churn
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const sixtyDaysAgo = new Date();
+      sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+
+      const { count: churn30 } = await supabase
+        .from("students")
+        .select("*", { count: "exact", head: true })
+        .eq("active", false)
+        .gte("updated_at", thirtyDaysAgo.toISOString());
+
+      const { count: churn60 } = await supabase
+        .from("students")
+        .select("*", { count: "exact", head: true })
+        .eq("active", false)
+        .gte("updated_at", sixtyDaysAgo.toISOString());
+
+      const churn = {
+        last30Days: churn30 || 0,
+        last60Days: churn60 || 0,
+        totalStudents: studentsCount || 0,
+        percentage30: studentsCount ? ((churn30 || 0) / studentsCount) * 100 : 0,
+        percentage60: studentsCount ? ((churn60 || 0) / studentsCount) * 100 : 0,
+      };
+
       setStats({
         totalStudents: studentsCount || 0,
         totalClasses: classesCount || 0,
@@ -115,6 +183,9 @@ export default function Dashboard() {
         estimatedRevenue: totalRevenue,
       });
       setWeeklyAttendanceData(weekData);
+      setHeatmapData(heatmap);
+      setTopClasses(topClassesData);
+      setChurnData(churn);
     } catch (error) {
       console.error("Error fetching stats:", error);
     } finally {
@@ -228,19 +299,15 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="gradient-xpace text-white">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Próximas Funcionalidades
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-white/90">
-              Em breve: Relatórios detalhados, mensagens automáticas, gestão de eventos e muito mais!
-            </p>
-          </CardContent>
-        </Card>
+        {/* BI Components */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <FrequencyHeatmap data={heatmapData} />
+          </div>
+          <TopClassesCard classes={topClasses} />
+        </div>
+
+        <ChurnIndicatorCard data={churnData} />
       </div>
     </DashboardLayout>
   );
