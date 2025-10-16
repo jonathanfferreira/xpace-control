@@ -9,14 +9,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useUnit } from '@/contexts/UnitContext';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Download } from 'lucide-react';
 import { studentSchema, type StudentFormData } from '@/lib/validations';
 import { useSubscription } from '@/hooks/useSubscription';
 import { SubscriptionLimitWarning } from '@/components/SubscriptionLimitWarning';
 
 export default function Students() {
   const { user } = useAuth();
+  const { selectedUnit } = useUnit();
   const [students, setStudents] = useState<any[]>([]);
   const [units, setUnits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,14 +41,21 @@ export default function Students() {
   useEffect(() => {
     fetchStudents();
     fetchUnits();
-  }, [user]);
+  }, [user, selectedUnit]);
 
   const fetchStudents = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('students')
         .select('*, school_units(name)')
         .order('created_at', { ascending: false });
+
+      // Filter by selected unit if one is selected
+      if (selectedUnit) {
+        query = query.eq('unit_id', selectedUnit.id);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setStudents(data || []);
@@ -59,6 +68,27 @@ export default function Students() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const downloadCSVTemplate = () => {
+    const csvContent = `nome,email,telefone,data_nascimento
+Ana Silva,ana@email.com,(11) 99999-1111,2010-05-15
+Bruno Santos,bruno@email.com,(11) 99999-2222,2008-03-22`;
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'modelo_importacao_alunos.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: 'Modelo baixado!',
+      description: 'Use este arquivo como base para importar seus alunos',
+    });
   };
 
   const fetchUnits = async () => {
@@ -230,22 +260,28 @@ export default function Students() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Alunos</h1>
             <p className="text-muted-foreground">Gerencie os alunos da sua escola</p>
           </div>
           
-          <Dialog open={isDialogOpen} onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if (!open) resetForm();
-          }}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Novo Aluno
-              </Button>
-            </DialogTrigger>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={downloadCSVTemplate}>
+              <Download className="mr-2 h-4 w-4" />
+              Baixar Modelo CSV
+            </Button>
+            
+            <Dialog open={isDialogOpen} onOpenChange={(open) => {
+              setIsDialogOpen(open);
+              if (!open) resetForm();
+            }}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Novo Aluno
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>
@@ -355,6 +391,7 @@ export default function Students() {
               </form>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         {/* Subscription Warning */}

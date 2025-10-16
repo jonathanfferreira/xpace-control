@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { DemoProvider } from "@/contexts/DemoContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { UnitProvider } from "@/contexts/UnitContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { initGA4, initMetaPixel, trackPageView } from "@/lib/analytics";
 
@@ -25,6 +26,7 @@ import Reports from "./pages/Reports";
 import Events from "./pages/Events";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
 
 import SignIn from "./pages/SignIn";
@@ -64,12 +66,13 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <HelmetProvider>
       <ThemeProvider>
-        <DemoProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <AnalyticsTracker />
+        <UnitProvider>
+          <DemoProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <AnalyticsTracker />
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<Index />} />
@@ -80,6 +83,11 @@ const App = () => (
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/termos" element={<TermsOfService />} />
               <Route path="/privacidade" element={<PrivacyPolicy />} />
+              <Route path="/onboarding" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <Onboarding />
+                </ProtectedRoute>
+              } />
 
               {/* Admin routes */}
               <Route path="/dashboard" element={
@@ -210,6 +218,7 @@ const App = () => (
           </BrowserRouter>
         </TooltipProvider>
       </DemoProvider>
+        </UnitProvider>
     </ThemeProvider>
     </HelmetProvider>
   </QueryClientProvider>

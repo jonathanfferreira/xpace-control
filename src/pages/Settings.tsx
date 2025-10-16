@@ -59,6 +59,10 @@ export default function Settings() {
           primary_color: schoolData.primary_color || "#6324b2",
           payment_provider: (schoolData.payment_provider as "MOCK" | "ASAAS_SANDBOX") || "MOCK",
         });
+      } else {
+        // No school found, redirect to onboarding
+        navigate("/onboarding");
+        return;
       }
 
       // Fetch profile

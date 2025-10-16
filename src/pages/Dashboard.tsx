@@ -5,10 +5,12 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, GraduationCap, CheckSquare, TrendingUp, DollarSign } from "lucide-react";
 import { useDemo } from "@/contexts/DemoContext";
+import { useUnit } from "@/contexts/UnitContext";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { FrequencyHeatmap } from "@/components/dashboard/FrequencyHeatmap";
 import { TopClassesCard } from "@/components/dashboard/TopClassesCard";
 import { ChurnIndicatorCard } from "@/components/dashboard/ChurnIndicatorCard";
+import { OnboardingChecklist } from "@/components/OnboardingChecklist";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -250,6 +252,9 @@ export default function Dashboard() {
             Analytics e métricas da sua escola de dança
           </p>
         </div>
+
+        {/* Onboarding Checklist */}
+        <OnboardingChecklist />
 
         <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {statCards.map((stat) => {
