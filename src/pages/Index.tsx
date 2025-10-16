@@ -1,11 +1,12 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Users, Calendar, QrCode, CreditCard, BarChart3, Shield, Star } from "lucide-react";
+import { ArrowRight, Users, Calendar, QrCode, CreditCard, BarChart3, Shield, Star, CheckCircle2, Sparkles, TrendingUp, Clock, Mail } from "lucide-react";
 import xpaceLogo from "@/assets/xpace-logo.png";
 import heroDance from "@/assets/hero-dance.jpg";
 import { useDemo } from "@/contexts/DemoContext";
 import { toast } from "sonner";
 import { LeadForm } from "@/components/LeadForm";
+import { SEOHead } from "@/components/SEOHead";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -51,9 +52,15 @@ const Index = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+    <>
+      <SEOHead 
+        title="Xpace Control - Sistema de Gestão Completo para Escolas de Dança"
+        description="Transforme a gestão da sua escola de dança com o Xpace Control. Controle de presenças via QR Code, gestão de pagamentos, turmas e alunos em uma plataforma moderna e intuitiva."
+        keywords="gestão escolas dança, controle presença QR Code, sistema pagamentos escola, gestão alunos turmas, software escola dança"
+      />
+      <div className="min-h-screen bg-background">
+        {/* Header */}
+        <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container flex h-16 items-center justify-between px-4">
           <Link to="/" className="flex items-center gap-2">
             <img src={xpaceLogo} alt="Xpace Control" className="h-8 md:h-10 w-auto" />
@@ -119,6 +126,99 @@ const Index = () => {
         </div>
       </section>
 
+      {/* For Dance Schools Section */}
+      <section className="py-12 md:py-20 bg-muted/30">
+        <div className="container px-4">
+          <div className="text-center mb-12 md:mb-16">
+            <div className="inline-flex items-center gap-2 text-sm font-medium text-primary bg-primary/10 px-4 py-2 rounded-full mb-4">
+              <Sparkles className="h-4 w-4" />
+              Para Escolas de Dança
+            </div>
+            <h2 className="text-2xl md:text-3xl lg:text-5xl font-bold mb-4">
+              Benefícios concretos para sua escola
+            </h2>
+            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
+              Economize tempo, reduza custos e foque no que realmente importa
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6 md:gap-8">
+            <div className="group p-6 rounded-xl bg-card border hover:border-primary/50 transition-all">
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-green-500/10 text-green-500">
+                <Clock className="h-6 w-6" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Economize 10h por semana</h3>
+              <p className="text-muted-foreground">
+                Automatize controle de presença, pagamentos e relatórios. Pare de perder tempo com planilhas e cadernos.
+              </p>
+            </div>
+            <div className="group p-6 rounded-xl bg-card border hover:border-primary/50 transition-all">
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
+                <TrendingUp className="h-6 w-6" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Reduza inadimplência em 40%</h3>
+              <p className="text-muted-foreground">
+                Lembretes automáticos, geração de boletos e controle financeiro completo em tempo real.
+              </p>
+            </div>
+            <div className="group p-6 rounded-xl bg-card border hover:border-primary/50 transition-all">
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-purple-500/10 text-purple-500">
+                <Sparkles className="h-6 w-6" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Tenha insights inteligentes</h3>
+              <p className="text-muted-foreground">
+                IA identifica risco de evasão e sugere ações. Relatórios de presença, faturamento e desempenho.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="py-12 md:py-20">
+        <div className="container px-4">
+          <div className="text-center mb-12 md:mb-16">
+            <h2 className="text-2xl md:text-3xl lg:text-5xl font-bold mb-4">
+              Como funciona
+            </h2>
+            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
+              Comece a usar em 3 passos simples
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            <div className="relative text-center">
+              <div className="mb-6 mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary">
+                1
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Criar escola</h3>
+              <p className="text-muted-foreground">
+                Cadastre sua escola em minutos. Adicione unidades, configure seus dados e personalize.
+              </p>
+              {/* Connector line for desktop */}
+              <div className="hidden md:block absolute top-8 left-[calc(50%+2rem)] w-[calc(100%-4rem)] h-0.5 bg-gradient-to-r from-primary/50 to-transparent"></div>
+            </div>
+            <div className="relative text-center">
+              <div className="mb-6 mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary">
+                2
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Montar turmas</h3>
+              <p className="text-muted-foreground">
+                Crie turmas, defina horários, adicione alunos e professores. Tudo organizado e visual.
+              </p>
+              <div className="hidden md:block absolute top-8 left-[calc(50%+2rem)] w-[calc(100%-4rem)] h-0.5 bg-gradient-to-r from-primary/50 to-transparent"></div>
+            </div>
+            <div className="relative text-center">
+              <div className="mb-6 mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary">
+                3
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Marcar presenças e cobrar</h3>
+              <p className="text-muted-foreground">
+                Use QR Code para presença instantânea. Gere cobranças automáticas e acompanhe tudo em tempo real.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Features Section */}
       <section id="funcionalidades" className="py-12 md:py-20 bg-muted/30">
         <div className="container px-4">
@@ -158,44 +258,199 @@ const Index = () => {
               Escolas de dança que já transformaram sua gestão com o Xpace Control
             </p>
           </div>
-          <div className="grid md:grid-cols-2 gap-6 md:gap-8 max-w-4xl mx-auto">
-            <div className="p-6 rounded-xl bg-card border">
+          <div className="grid md:grid-cols-3 gap-6 md:gap-8 max-w-6xl mx-auto">
+            <div className="p-6 rounded-xl bg-card border hover:border-primary/50 transition-all">
               <div className="flex gap-1 mb-4">
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <Star key={star} className="h-5 w-5 fill-accent text-accent" />
+                  <Star key={star} className="h-5 w-5 fill-amber-400 text-amber-400" />
                 ))}
               </div>
-              <p className="text-lg mb-4 italic">
+              <p className="text-base mb-4 italic">
                 "O Xpace Control revolucionou nossa gestão! A presença por QR code economiza muito tempo e os relatórios são incríveis."
               </p>
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
                   MC
                 </div>
                 <div>
-                  <p className="font-semibold">Maria Clara</p>
+                  <p className="font-semibold">Maria Clara Souza</p>
                   <p className="text-sm text-muted-foreground">Escola de Ballet Arte & Movimento</p>
+                  <p className="text-xs text-muted-foreground">São Paulo, SP</p>
                 </div>
               </div>
             </div>
-            <div className="p-6 rounded-xl bg-card border">
+            <div className="p-6 rounded-xl bg-card border hover:border-primary/50 transition-all">
               <div className="flex gap-1 mb-4">
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <Star key={star} className="h-5 w-5 fill-accent text-accent" />
+                  <Star key={star} className="h-5 w-5 fill-amber-400 text-amber-400" />
                 ))}
               </div>
-              <p className="text-lg mb-4 italic">
+              <p className="text-base mb-4 italic">
                 "Antes gastávamos horas com controle de pagamentos. Agora tudo é automático e organizado. Recomendo demais!"
               </p>
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center text-white font-bold text-sm">
                   RS
                 </div>
                 <div>
                   <p className="font-semibold">Roberto Santos</p>
                   <p className="text-sm text-muted-foreground">Studio de Dança Urbana</p>
+                  <p className="text-xs text-muted-foreground">Rio de Janeiro, RJ</p>
                 </div>
               </div>
+            </div>
+            <div className="p-6 rounded-xl bg-card border hover:border-primary/50 transition-all">
+              <div className="flex gap-1 mb-4">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star key={star} className="h-5 w-5 fill-amber-400 text-amber-400" />
+                ))}
+              </div>
+              <p className="text-base mb-4 italic">
+                "A IA que detecta risco de evasão é fantástica! Conseguimos agir antes de perder alunos. Imprescindível!"
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center text-white font-bold text-sm">
+                  AF
+                </div>
+                <div>
+                  <p className="font-semibold">Ana Flávia Lima</p>
+                  <p className="text-sm text-muted-foreground">Academia Ritmo & Movimento</p>
+                  <p className="text-xs text-muted-foreground">Belo Horizonte, MG</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section id="precos" className="py-12 md:py-20 bg-muted/30">
+        <div className="container px-4">
+          <div className="text-center mb-12 md:mb-16">
+            <h2 className="text-2xl md:text-3xl lg:text-5xl font-bold mb-4">
+              Planos que cabem no seu bolso
+            </h2>
+            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
+              15 dias grátis para testar. Cancele quando quiser.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto">
+            {/* Start Plan */}
+            <div className="p-6 rounded-xl bg-card border hover:border-primary/50 transition-all">
+              <h3 className="text-2xl font-bold mb-2">Start</h3>
+              <div className="flex items-baseline gap-1 mb-4">
+                <span className="text-4xl font-bold">R$ 99</span>
+                <span className="text-muted-foreground">/mês</span>
+              </div>
+              <p className="text-sm text-muted-foreground mb-6">Ideal para escolas pequenas</p>
+              <ul className="space-y-3 mb-6">
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">Até 50 alunos</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">1 unidade</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">Presença via QR Code</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">Gestão de pagamentos</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">Relatórios básicos</span>
+                </li>
+              </ul>
+              <Link to="/auth?mode=signup" className="block">
+                <Button className="w-full" variant="outline">Começar grátis</Button>
+              </Link>
+            </div>
+
+            {/* Pro Plan - Featured */}
+            <div className="p-6 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 border-2 border-primary relative">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-medium">
+                Mais Popular
+              </div>
+              <h3 className="text-2xl font-bold mb-2">Pro</h3>
+              <div className="flex items-baseline gap-1 mb-4">
+                <span className="text-4xl font-bold">R$ 249</span>
+                <span className="text-muted-foreground">/mês</span>
+              </div>
+              <p className="text-sm text-muted-foreground mb-6">Para escolas em crescimento</p>
+              <ul className="space-y-3 mb-6">
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">Até 200 alunos</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">Até 3 unidades</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">Todos os recursos do Start</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">Relatórios avançados</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">IA de detecção de evasão</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">Notificações automáticas</span>
+                </li>
+              </ul>
+              <Link to="/auth?mode=signup" className="block">
+                <Button className="w-full gradient-xpace">Começar grátis</Button>
+              </Link>
+            </div>
+
+            {/* Enterprise */}
+            <div className="p-6 rounded-xl bg-card border hover:border-primary/50 transition-all">
+              <h3 className="text-2xl font-bold mb-2">Enterprise</h3>
+              <div className="flex items-baseline gap-1 mb-4">
+                <span className="text-4xl font-bold">Custom</span>
+              </div>
+              <p className="text-sm text-muted-foreground mb-6">Para grandes escolas e redes</p>
+              <ul className="space-y-3 mb-6">
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">Alunos ilimitados</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">Unidades ilimitadas</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">Todos os recursos do Pro</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">Suporte prioritário</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">Treinamento personalizado</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">API personalizada</span>
+                </li>
+              </ul>
+              <a href="mailto:contato@xpacecontrol.com">
+                <Button className="w-full" variant="outline">
+                  <Mail className="h-4 w-4 mr-2" />
+                  Fale com a gente
+                </Button>
+              </a>
             </div>
           </div>
         </div>
@@ -265,7 +520,8 @@ const Index = () => {
           </div>
         </div>
       </footer>
-    </div>
+      </div>
+    </>
   );
 };
 
