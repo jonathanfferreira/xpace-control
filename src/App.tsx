@@ -118,6 +118,11 @@ const App = () => (
                   <Settings />
                 </ProtectedRoute>
               } />
+              <Route path="/planos" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <Pricing />
+                </ProtectedRoute>
+              } />
               <Route path="/leads" element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <Leads />

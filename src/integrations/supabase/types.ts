@@ -862,6 +862,10 @@ export type Database = {
         Args: { _class_id: string; _user_id: string }
         Returns: boolean
       }
+      create_trial_subscription: {
+        Args: { _school_id: string }
+        Returns: undefined
+      }
       get_user_school: {
         Args: { _user_id: string }
         Returns: string

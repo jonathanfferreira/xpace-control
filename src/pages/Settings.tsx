@@ -100,8 +100,17 @@ export default function Settings() {
 
       if (error) throw error;
 
+      // Create trial subscription
+      const { error: functionError } = await supabase.rpc("create_trial_subscription", {
+        _school_id: data.id,
+      });
+
+      if (functionError) {
+        console.error("Error creating trial subscription:", functionError);
+      }
+
       setSchool(data);
-      toast.success("Escola criada com sucesso!");
+      toast.success("Escola criada com sucesso! Trial de 15 dias ativado.");
     } catch (error: any) {
       toast.error(error.message || "Erro ao criar escola");
     }

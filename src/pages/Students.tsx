@@ -12,6 +12,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
 import { studentSchema, type StudentFormData } from '@/lib/validations';
+import { useSubscription } from '@/hooks/useSubscription';
+import { SubscriptionLimitWarning } from '@/components/SubscriptionLimitWarning';
 
 export default function Students() {
   const { user } = useAuth();
@@ -20,6 +22,7 @@ export default function Students() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const { subscription, canAddStudent } = useSubscription();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<any>(null);
   const [formData, setFormData] = useState<StudentFormData>({
@@ -74,6 +77,19 @@ export default function Students() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Check subscription limit when creating new student
+    if (!editingStudent) {
+      const canAdd = await canAddStudent(students.length);
+      if (!canAdd) {
+        toast({
+          title: 'Limite atingido',
+          description: 'Você atingiu o limite de alunos do seu plano. Faça upgrade para adicionar mais alunos.',
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
 
     try {
       const validatedData = studentSchema.parse(formData);
@@ -340,6 +356,12 @@ export default function Students() {
             </DialogContent>
           </Dialog>
         </div>
+
+        {/* Subscription Warning */}
+        <SubscriptionLimitWarning
+          subscription={subscription}
+          currentCount={students.length}
+        />
 
         <div className="flex gap-4 items-center">
           <div className="relative flex-1">

@@ -1,180 +1,257 @@
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, ArrowLeft } from "lucide-react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import xpaceLogo from "@/assets/xpace-logo.png";
+import { Check, Crown, Zap } from "lucide-react";
+import type { Database } from "@/integrations/supabase/types";
 
-const Pricing = () => {
-  const handleSubscribe = (planName: string) => {
-    toast.success(`Plano ${planName} ativado com sucesso!`, {
-      description: "Você já pode começar a usar todos os recursos.",
-    });
+type Plan = Database["public"]["Tables"]["plans"]["Row"];
+type Subscription = Database["public"]["Tables"]["subscriptions"]["Row"] & {
+  plans?: Plan;
+};
+type School = Database["public"]["Tables"]["schools"]["Row"];
+
+export default function Pricing() {
+  const navigate = useNavigate();
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [school, setSchool] = useState<School | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    checkAuth();
+    fetchData();
+  }, []);
+
+  const checkAuth = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      navigate("/auth");
+    }
   };
 
-  const plans = [
-    {
-      name: "Start",
-      price: "R$ 49",
-      period: "/mês",
-      description: "Perfeito para começar",
-      features: [
-        "Até 50 alunos",
-        "Turmas ilimitadas",
-        "Controle de presenças via QR Code",
-        "Gestão de pagamentos",
-        "Relatórios básicos",
-        "Suporte por email",
-      ],
-      cta: "Começar Agora",
-      popular: false,
-    },
-    {
-      name: "Pro",
-      price: "R$ 99",
-      period: "/mês",
-      description: "Para escolas em crescimento",
-      features: [
-        "Alunos ilimitados",
-        "Turmas ilimitadas",
-        "Controle de presenças via QR Code",
-        "Gestão de pagamentos avançada",
-        "Relatórios completos e analytics",
-        "Multi-unidades",
-        "Suporte prioritário",
-        "API de integração",
-      ],
-      cta: "Assinar Pro",
-      popular: true,
-    },
-    {
-      name: "Personalizado",
-      price: "Sob consulta",
-      period: "",
-      description: "Solução customizada",
-      features: [
-        "Tudo do plano Pro",
-        "Customização completa",
-        "Treinamento da equipe",
-        "Gerente de conta dedicado",
-        "Migração de dados",
-        "SLA garantido",
-      ],
-      cta: "Falar com Vendas",
-      popular: false,
-    },
-  ];
+  const fetchData = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Fetch school
+      const { data: schoolData } = await supabase
+        .from("schools")
+        .select("*")
+        .eq("admin_id", user.id)
+        .single();
+
+      if (schoolData) {
+        setSchool(schoolData);
+
+        // Fetch current subscription
+        const { data: subData } = await supabase
+          .from("subscriptions")
+          .select(`
+            *,
+            plans(*)
+          `)
+          .eq("school_id", schoolData.id)
+          .single();
+
+        setSubscription(subData);
+      }
+
+      // Fetch available plans
+      const { data: plansData } = await supabase
+        .from("plans")
+        .select("*")
+        .eq("active", true)
+        .order("monthly_price");
+
+      setPlans(plansData || []);
+    } catch (error: any) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubscribe = async (planId: string) => {
+    if (!school) {
+      toast.error("Você precisa criar uma escola primeiro");
+      navigate("/configuracoes");
+      return;
+    }
+
+    try {
+      if (subscription) {
+        // Update existing subscription
+        const { error } = await supabase
+          .from("subscriptions")
+          .update({
+            plan_id: planId,
+            status: "active",
+            renew_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+          })
+          .eq("id", subscription.id);
+
+        if (error) throw error;
+      } else {
+        // Create new subscription
+        const { error } = await supabase
+          .from("subscriptions")
+          .insert({
+            school_id: school.id,
+            plan_id: planId,
+            status: "active",
+            renew_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+          });
+
+        if (error) throw error;
+      }
+
+      toast.success("Plano atualizado com sucesso!");
+      fetchData();
+    } catch (error: any) {
+      toast.error("Erro ao atualizar plano: " + error.message);
+    }
+  };
+
+  const getDaysRemaining = () => {
+    if (!subscription?.renew_at) return 0;
+    const now = new Date();
+    const renewDate = new Date(subscription.renew_at);
+    const diff = renewDate.getTime() - now.getTime();
+    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  };
+
+  const renderFeatures = (features: any) => {
+    try {
+      const featureList = typeof features === "string" ? JSON.parse(features) : features;
+      return Array.isArray(featureList) ? featureList : [];
+    } catch {
+      return [];
+    }
+  };
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-        <div className="container flex h-16 items-center justify-between px-4">
-          <Link to="/" className="flex items-center gap-2">
-            <img src={xpaceLogo} alt="Xpace Control" className="h-8 md:h-10 w-auto" />
-          </Link>
-          <Link to="/">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Voltar
-            </Button>
-          </Link>
+    <DashboardLayout>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Planos e Assinaturas</h1>
+          <p className="text-muted-foreground">Escolha o melhor plano para sua escola</p>
         </div>
-      </header>
 
-      {/* Pricing Section */}
-      <section className="py-12 md:py-20">
-        <div className="container px-4">
-          <div className="text-center mb-12 md:mb-16">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-              Escolha o plano ideal para sua escola
-            </h1>
-            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
-              Planos flexíveis que crescem com seu negócio. Sem taxas escondidas.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6 md:gap-8 max-w-6xl mx-auto">
-            {plans.map((plan, index) => (
-              <Card
-                key={index}
-                className={`relative flex flex-col ${
-                  plan.popular
-                    ? "border-primary shadow-2xl scale-105 md:scale-110"
-                    : "border-border"
-                }`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <span className="gradient-xpace text-white px-4 py-1 rounded-full text-sm font-semibold shadow-lg">
-                      Mais Popular
-                    </span>
-                  </div>
+        {/* Current Subscription Info */}
+        {subscription && (
+          <Card className="border-primary">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Crown className="h-5 w-5 text-primary" />
+                Plano Atual: {subscription.plans?.name}
+              </CardTitle>
+              <CardDescription>
+                {subscription.status === "trial" ? (
+                  <span className="text-yellow-600 dark:text-yellow-400 font-medium">
+                    Trial - {getDaysRemaining()} dias restantes
+                  </span>
+                ) : (
+                  <span className="text-green-600 dark:text-green-400 font-medium">
+                    Ativo - Renova em {new Date(subscription.renew_at || "").toLocaleDateString("pt-BR")}
+                  </span>
                 )}
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        )}
 
-                <CardHeader className="text-center pb-8 pt-8">
-                  <CardTitle className="text-xl mb-2">{plan.name}</CardTitle>
-                  <CardDescription>{plan.description}</CardDescription>
-                  <div className="mt-4">
-                    <span className="text-4xl md:text-5xl font-bold">{plan.price}</span>
-                    {plan.period && (
-                      <span className="text-muted-foreground ml-1">{plan.period}</span>
+        {/* Plans Grid */}
+        <div className="grid gap-6 md:grid-cols-2">
+          {plans.map((plan) => {
+            const isCurrentPlan = subscription?.plan_id === plan.id;
+            const features = renderFeatures(plan.features);
+
+            return (
+              <Card
+                key={plan.id}
+                className={isCurrentPlan ? "border-primary shadow-lg" : ""}
+              >
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-2xl">{plan.name}</CardTitle>
+                    {plan.name === "Pro" && (
+                      <Badge className="bg-gradient-to-r from-primary to-accent">
+                        <Zap className="h-3 w-3 mr-1" />
+                        Popular
+                      </Badge>
                     )}
                   </div>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-4xl font-bold">
+                      R$ {plan.monthly_price.toFixed(2)}
+                    </span>
+                    <span className="text-muted-foreground">/mês</span>
+                  </div>
+                  <CardDescription>
+                    {plan.student_limit
+                      ? `Até ${plan.student_limit} alunos`
+                      : "Alunos ilimitados"}
+                  </CardDescription>
                 </CardHeader>
-
-                <CardContent className="flex-1">
-                  <ul className="space-y-3 mb-8">
-                    {plan.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                <CardContent>
+                  <ul className="space-y-3">
+                    {features.map((feature: string, index: number) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <Check className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
                         <span className="text-sm">{feature}</span>
                       </li>
                     ))}
                   </ul>
-
-                  <Button
-                    className="w-full"
-                    variant={plan.popular ? "hero" : "outline"}
-                    size="lg"
-                    onClick={() => handleSubscribe(plan.name)}
-                  >
-                    {plan.cta}
-                  </Button>
                 </CardContent>
+                <CardFooter>
+                  <Button
+                    className="w-full gradient-xpace"
+                    onClick={() => handleSubscribe(plan.id)}
+                    disabled={isCurrentPlan && subscription?.status === "active"}
+                  >
+                    {isCurrentPlan && subscription?.status === "active"
+                      ? "Plano Atual"
+                      : isCurrentPlan && subscription?.status === "trial"
+                      ? "Ativar Plano"
+                      : "Escolher Plano"}
+                  </Button>
+                </CardFooter>
               </Card>
-            ))}
-          </div>
-
-          {/* FAQ Section */}
-          <div className="mt-16 md:mt-24 max-w-3xl mx-auto text-center">
-            <h2 className="text-2xl md:text-3xl font-bold mb-6">Perguntas Frequentes</h2>
-            <div className="space-y-4 text-left">
-              <div className="p-4 rounded-lg bg-muted/50">
-                <h3 className="font-semibold mb-2">Posso cancelar a qualquer momento?</h3>
-                <p className="text-sm text-muted-foreground">
-                  Sim! Você pode cancelar sua assinatura a qualquer momento, sem multas ou taxas adicionais.
-                </p>
-              </div>
-              <div className="p-4 rounded-lg bg-muted/50">
-                <h3 className="font-semibold mb-2">Existe período de teste?</h3>
-                <p className="text-sm text-muted-foreground">
-                  Sim! Oferecemos 14 dias de teste grátis em todos os planos para você conhecer a plataforma.
-                </p>
-              </div>
-              <div className="p-4 rounded-lg bg-muted/50">
-                <h3 className="font-semibold mb-2">Como funciona o suporte?</h3>
-                <p className="text-sm text-muted-foreground">
-                  Plano Start tem suporte por email. Plano Pro tem suporte prioritário por email e WhatsApp.
-                  Plano Personalizado inclui gerente de conta dedicado.
-                </p>
-              </div>
-            </div>
-          </div>
+            );
+          })}
         </div>
-      </section>
-    </div>
-  );
-};
 
-export default Pricing;
+        {/* Trial Warning */}
+        {subscription?.status === "trial" && getDaysRemaining() <= 5 && (
+          <Card className="border-yellow-500 bg-yellow-50 dark:bg-yellow-950">
+            <CardHeader>
+              <CardTitle className="text-yellow-800 dark:text-yellow-200">
+                ⚠️ Seu período de trial está terminando
+              </CardTitle>
+              <CardDescription className="text-yellow-700 dark:text-yellow-300">
+                Você tem {getDaysRemaining()} dias restantes no período trial. Escolha um plano para
+                continuar usando o Xpace Control sem interrupções.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        )}
+      </div>
+    </DashboardLayout>
+  );
+}
