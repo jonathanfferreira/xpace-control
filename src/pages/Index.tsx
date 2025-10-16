@@ -134,7 +134,7 @@ const Index = () => {
               </p>
               <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
                 <Link to="/auth?mode=signup" className="w-full sm:w-auto">
-                  <Button size="lg" variant="hero" className="group w-full sm:w-auto">
+                  <Button size="lg" className="group w-full sm:w-auto bg-[#6324b2] text-white hover:opacity-90 transition-opacity">
                     Testar Agora
                     <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                   </Button>
@@ -151,6 +151,71 @@ const Index = () => {
                 alt="Escola de dança moderna" 
                 className="relative rounded-2xl shadow-2xl w-full"
               />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Product Screenshots Section */}
+      <section className="py-12 md:py-20 bg-background">
+        <div className="container px-4">
+          <div className="text-center mb-12 md:mb-16">
+            <div className="inline-flex items-center gap-2 text-sm font-medium text-primary bg-primary/10 px-4 py-2 rounded-full mb-4">
+              <Sparkles className="h-4 w-4" />
+              Veja o produto
+            </div>
+            <h2 className="text-2xl md:text-3xl lg:text-5xl font-bold mb-4">
+              Interface moderna e intuitiva
+            </h2>
+            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
+              Tudo que você precisa, em telas simples e bonitas
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6 md:gap-8">
+            <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-shadow">
+              <div className="aspect-video bg-gradient-to-br from-purple-500/10 to-blue-500/10 flex items-center justify-center p-4">
+                <img 
+                  src="/placeholder.svg" 
+                  alt="Dashboard com métricas e gráficos de desempenho"
+                  className="w-full h-full object-cover rounded-lg"
+                  sizes="100vw"
+                  loading="lazy"
+                />
+              </div>
+              <div className="p-4">
+                <h3 className="font-semibold text-lg mb-1">Dashboard Completo</h3>
+                <p className="text-sm text-muted-foreground">Visualize todas as métricas importantes em tempo real</p>
+              </div>
+            </div>
+            <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-shadow">
+              <div className="aspect-video bg-gradient-to-br from-blue-500/10 to-cyan-500/10 flex items-center justify-center p-4">
+                <img 
+                  src="/placeholder.svg" 
+                  alt="Controle de presenças com QR Code"
+                  className="w-full h-full object-cover rounded-lg"
+                  sizes="100vw"
+                  loading="lazy"
+                />
+              </div>
+              <div className="p-4">
+                <h3 className="font-semibold text-lg mb-1">Presença via QR Code</h3>
+                <p className="text-sm text-muted-foreground">Marque presenças em segundos com tecnologia QR</p>
+              </div>
+            </div>
+            <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-shadow">
+              <div className="aspect-video bg-gradient-to-br from-orange-500/10 to-pink-500/10 flex items-center justify-center p-4">
+                <img 
+                  src="/placeholder.svg" 
+                  alt="Gestão de turmas e horários"
+                  className="w-full h-full object-cover rounded-lg"
+                  sizes="100vw"
+                  loading="lazy"
+                />
+              </div>
+              <div className="p-4">
+                <h3 className="font-semibold text-lg mb-1">Gestão de Turmas</h3>
+                <p className="text-sm text-muted-foreground">Organize turmas, horários e alunos facilmente</p>
+              </div>
             </div>
           </div>
         </div>
