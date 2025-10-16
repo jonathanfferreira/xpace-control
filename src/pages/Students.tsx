@@ -15,6 +15,7 @@ import { Plus, Search, Pencil, Trash2, Download } from 'lucide-react';
 import { studentSchema, type StudentFormData } from '@/lib/validations';
 import { useSubscription } from '@/hooks/useSubscription';
 import { SubscriptionLimitWarning } from '@/components/SubscriptionLimitWarning';
+import { UpgradeModal } from '@/components/UpgradeModal';
 import { StudentPointsCell } from '@/components/students/StudentPointsCell';
 
 export default function Students() {
@@ -27,6 +28,7 @@ export default function Students() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const { subscription, canAddStudent } = useSubscription();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [editingStudent, setEditingStudent] = useState<any>(null);
   const [formData, setFormData] = useState<StudentFormData>({
     full_name: '',
@@ -111,13 +113,9 @@ Bruno Santos,bruno@email.com,(11) 99999-2222,2008-03-22`;
 
     // Check subscription limit when creating new student
     if (!editingStudent) {
-      const canAdd = await canAddStudent(students.length);
+      const canAdd = await canAddStudent(students.filter(s => s.active).length);
       if (!canAdd) {
-        toast({
-          title: 'Limite atingido',
-          description: 'Você atingiu o limite de alunos do seu plano. Faça upgrade para adicionar mais alunos.',
-          variant: 'destructive',
-        });
+        setShowUpgradeModal(true);
         return;
       }
     }
@@ -278,7 +276,17 @@ Bruno Santos,bruno@email.com,(11) 99999-2222,2008-03-22`;
               if (!open) resetForm();
             }}>
               <DialogTrigger asChild>
-                <Button>
+                <Button onClick={async () => {
+                  // Check subscription limit before opening dialog
+                  if (subscription?.plans?.student_limit) {
+                    const activeStudents = students.filter(s => s.active).length;
+                    if (activeStudents >= subscription.plans.student_limit) {
+                      setShowUpgradeModal(true);
+                      return;
+                    }
+                  }
+                  setIsDialogOpen(true);
+                }}>
                   <Plus className="mr-2 h-4 w-4" />
                   Novo Aluno
                 </Button>
@@ -484,6 +492,14 @@ Bruno Santos,bruno@email.com,(11) 99999-2222,2008-03-22`;
           </Table>
         </div>
       </div>
+      
+      <UpgradeModal
+        open={showUpgradeModal}
+        onOpenChange={setShowUpgradeModal}
+        subscription={subscription}
+        currentCount={students.filter(s => s.active).length}
+        featureName="adicionar mais alunos"
+      />
     </DashboardLayout>
   );
 }

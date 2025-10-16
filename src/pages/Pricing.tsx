@@ -84,7 +84,20 @@ export default function Pricing() {
       return;
     }
 
+    // Check if it's Enterprise plan
+    const plan = plans.find(p => p.id === planId);
+    if (plan?.name === "Enterprise") {
+      toast.info("Por favor, entre em contato com nossa equipe para contratar o plano Enterprise");
+      return;
+    }
+
     try {
+      // Mock payment flow for now
+      toast.success("Processando pagamento...", { duration: 2000 });
+      
+      // Simulate payment delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
       if (subscription) {
         // Update existing subscription
         const { error } = await supabase
@@ -111,7 +124,7 @@ export default function Pricing() {
         if (error) throw error;
       }
 
-      toast.success("Plano atualizado com sucesso!");
+      toast.success("Plano atualizado com sucesso! 🎉");
       fetchData();
     } catch (error: any) {
       toast.error("Erro ao atualizar plano: " + error.message);
