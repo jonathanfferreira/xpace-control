@@ -4,9 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, GraduationCap, CheckSquare, TrendingUp } from "lucide-react";
+import { useDemo } from "@/contexts/DemoContext";
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { isDemoMode, demoData } = useDemo();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalStudents: 0,
@@ -15,9 +17,19 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
-    checkAuth();
-    fetchStats();
-  }, []);
+    if (isDemoMode) {
+      // Use demo data
+      setStats({
+        totalStudents: demoData.students.length,
+        totalClasses: demoData.classes.length,
+        attendancesLast7Days: demoData.attendances.length,
+      });
+      setLoading(false);
+    } else {
+      checkAuth();
+      fetchStats();
+    }
+  }, [isDemoMode]);
 
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -96,13 +108,13 @@ export default function Dashboard() {
     <AppLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <h1 className="text-3xl md:text-4xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground">
             Bem-vindo ao Xpace Control. Visão geral da sua escola.
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {statCards.map((stat) => {
             const Icon = stat.icon;
             return (
@@ -114,7 +126,7 @@ export default function Dashboard() {
                   <Icon className={`h-5 w-5 ${stat.color}`} />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold">{stat.value}</div>
+                  <div className="text-2xl md:text-3xl font-bold">{stat.value}</div>
                   <p className="text-xs text-muted-foreground mt-1">
                     {stat.description}
                   </p>

@@ -1,0 +1,223 @@
+// Demo data for demonstration mode
+export const DEMO_USER = {
+  id: 'demo-user-id',
+  email: 'demo@xpacecontrol.com',
+  full_name: 'Usuário Demo',
+};
+
+export const DEMO_SCHOOL = {
+  id: 'demo-school-id',
+  name: 'Escola de Dança Demo',
+  admin_id: 'demo-user-id',
+  primary_color: '#6324b2',
+};
+
+export const DEMO_CLASSES = [
+  {
+    id: 'class-1',
+    name: 'Ballet Clássico Iniciante',
+    description: 'Turma de ballet para iniciantes',
+    schedule_day: 'Segunda-feira',
+    schedule_time: '18:00',
+    duration_minutes: 60,
+    max_students: 15,
+    school_id: 'demo-school-id',
+    active: true,
+    qr_code: 'demo-qr-class-1',
+  },
+  {
+    id: 'class-2',
+    name: 'Hip Hop Avançado',
+    description: 'Turma avançada de hip hop',
+    schedule_day: 'Quarta-feira',
+    schedule_time: '19:30',
+    duration_minutes: 90,
+    max_students: 20,
+    school_id: 'demo-school-id',
+    active: true,
+    qr_code: 'demo-qr-class-2',
+  },
+  {
+    id: 'class-3',
+    name: 'Jazz Contemporâneo',
+    description: 'Jazz contemporâneo para todos os níveis',
+    schedule_day: 'Sexta-feira',
+    schedule_time: '20:00',
+    duration_minutes: 75,
+    max_students: 18,
+    school_id: 'demo-school-id',
+    active: true,
+    qr_code: 'demo-qr-class-3',
+  },
+];
+
+export const DEMO_STUDENTS = [
+  {
+    id: 'student-1',
+    full_name: 'Ana Clara Santos',
+    email: 'ana.clara@email.com',
+    phone: '+55 11 98765-4321',
+    birth_date: '2008-03-15',
+    school_id: 'demo-school-id',
+    active: true,
+  },
+  {
+    id: 'student-2',
+    full_name: 'Bruno Costa',
+    email: 'bruno.costa@email.com',
+    phone: '+55 11 97654-3210',
+    birth_date: '2010-07-22',
+    school_id: 'demo-school-id',
+    active: true,
+  },
+  {
+    id: 'student-3',
+    full_name: 'Camila Oliveira',
+    email: 'camila.oliveira@email.com',
+    phone: '+55 11 96543-2109',
+    birth_date: '2009-11-08',
+    school_id: 'demo-school-id',
+    active: true,
+  },
+  {
+    id: 'student-4',
+    full_name: 'Daniel Ferreira',
+    email: 'daniel.ferreira@email.com',
+    phone: '+55 11 95432-1098',
+    birth_date: '2011-02-14',
+    school_id: 'demo-school-id',
+    active: true,
+  },
+  {
+    id: 'student-5',
+    full_name: 'Eduarda Lima',
+    email: 'eduarda.lima@email.com',
+    phone: '+55 11 94321-0987',
+    birth_date: '2007-09-30',
+    school_id: 'demo-school-id',
+    active: true,
+  },
+  {
+    id: 'student-6',
+    full_name: 'Felipe Martins',
+    email: 'felipe.martins@email.com',
+    phone: '+55 11 93210-9876',
+    birth_date: '2012-05-18',
+    school_id: 'demo-school-id',
+    active: true,
+  },
+  {
+    id: 'student-7',
+    full_name: 'Gabriela Souza',
+    email: 'gabriela.souza@email.com',
+    phone: '+55 11 92109-8765',
+    birth_date: '2008-12-25',
+    school_id: 'demo-school-id',
+    active: true,
+  },
+  {
+    id: 'student-8',
+    full_name: 'Henrique Alves',
+    email: 'henrique.alves@email.com',
+    phone: '+55 11 91098-7654',
+    birth_date: '2010-04-07',
+    school_id: 'demo-school-id',
+    active: true,
+  },
+  {
+    id: 'student-9',
+    full_name: 'Isabela Rodrigues',
+    email: 'isabela.rodrigues@email.com',
+    phone: '+55 11 90987-6543',
+    birth_date: '2009-08-19',
+    school_id: 'demo-school-id',
+    active: true,
+  },
+  {
+    id: 'student-10',
+    full_name: 'João Pedro Silva',
+    email: 'joao.pedro@email.com',
+    phone: '+55 11 89876-5432',
+    birth_date: '2011-10-03',
+    school_id: 'demo-school-id',
+    active: true,
+  },
+];
+
+export const DEMO_ATTENDANCES = [
+  // Class 1 attendances (last 7 days)
+  { student_id: 'student-1', class_id: 'class-1', attendance_date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] },
+  { student_id: 'student-2', class_id: 'class-1', attendance_date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] },
+  { student_id: 'student-3', class_id: 'class-1', attendance_date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] },
+  { student_id: 'student-4', class_id: 'class-1', attendance_date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] },
+  
+  // Class 2 attendances
+  { student_id: 'student-5', class_id: 'class-2', attendance_date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] },
+  { student_id: 'student-6', class_id: 'class-2', attendance_date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] },
+  { student_id: 'student-7', class_id: 'class-2', attendance_date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] },
+  { student_id: 'student-8', class_id: 'class-2', attendance_date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] },
+  
+  // Class 3 attendances
+  { student_id: 'student-1', class_id: 'class-3', attendance_date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] },
+  { student_id: 'student-3', class_id: 'class-3', attendance_date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] },
+  { student_id: 'student-5', class_id: 'class-3', attendance_date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] },
+  { student_id: 'student-7', class_id: 'class-3', attendance_date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] },
+  
+  // More recent attendances
+  { student_id: 'student-2', class_id: 'class-1', attendance_date: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] },
+  { student_id: 'student-4', class_id: 'class-1', attendance_date: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] },
+  { student_id: 'student-6', class_id: 'class-2', attendance_date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] },
+  { student_id: 'student-8', class_id: 'class-2', attendance_date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] },
+  { student_id: 'student-9', class_id: 'class-3', attendance_date: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] },
+  { student_id: 'student-10', class_id: 'class-3', attendance_date: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] },
+  { student_id: 'student-1', class_id: 'class-1', attendance_date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] },
+  { student_id: 'student-3', class_id: 'class-1', attendance_date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] },
+];
+
+export const DEMO_PAYMENTS = [
+  {
+    id: 'payment-1',
+    student_id: 'student-1',
+    amount: 150.00,
+    due_date: '2025-01-10',
+    paid_date: '2025-01-08',
+    status: 'paid' as const,
+    reference_month: '2025-01-01',
+  },
+  {
+    id: 'payment-2',
+    student_id: 'student-2',
+    amount: 150.00,
+    due_date: '2025-01-10',
+    paid_date: '2025-01-09',
+    status: 'paid' as const,
+    reference_month: '2025-01-01',
+  },
+  {
+    id: 'payment-3',
+    student_id: 'student-3',
+    amount: 150.00,
+    due_date: '2025-01-10',
+    paid_date: '2025-01-10',
+    status: 'paid' as const,
+    reference_month: '2025-01-01',
+  },
+  {
+    id: 'payment-4',
+    student_id: 'student-4',
+    amount: 150.00,
+    due_date: '2025-01-10',
+    paid_date: null,
+    status: 'pending' as const,
+    reference_month: '2025-01-01',
+  },
+  {
+    id: 'payment-5',
+    student_id: 'student-5',
+    amount: 150.00,
+    due_date: '2024-12-10',
+    paid_date: null,
+    status: 'overdue' as const,
+    reference_month: '2024-12-01',
+  },
+];
