@@ -10,6 +10,7 @@ import {
   Calendar,
   Settings,
   LogOut,
+  Bell,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -36,6 +37,7 @@ const adminItems = [
   { title: 'Relatórios', url: '/relatorios', icon: BarChart3 },
   { title: 'CRM / Leads', url: '/leads', icon: UserPlus },
   { title: 'Eventos', url: '/eventos', icon: Calendar },
+  { title: 'Notificações & IA', url: '/notificacoes', icon: Bell },
   { title: 'Configurações', url: '/configuracoes', icon: Settings },
 ];
 
