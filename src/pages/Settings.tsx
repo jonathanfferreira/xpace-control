@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -20,6 +21,7 @@ export default function Settings() {
   const [schoolForm, setSchoolForm] = useState({
     name: "",
     primary_color: "#6324b2",
+    payment_provider: "MOCK" as "MOCK" | "ASAAS_SANDBOX",
   });
   const [profileForm, setProfileForm] = useState({
     full_name: "",
@@ -55,6 +57,7 @@ export default function Settings() {
         setSchoolForm({
           name: schoolData.name,
           primary_color: schoolData.primary_color || "#6324b2",
+          payment_provider: (schoolData.payment_provider as "MOCK" | "ASAAS_SANDBOX") || "MOCK",
         });
       }
 
@@ -89,6 +92,7 @@ export default function Settings() {
         .insert({
           name: schoolForm.name,
           primary_color: schoolForm.primary_color,
+          payment_provider: schoolForm.payment_provider,
           admin_id: user.id,
         })
         .select()
@@ -112,6 +116,7 @@ export default function Settings() {
         .update({
           name: schoolForm.name,
           primary_color: schoolForm.primary_color,
+          payment_provider: schoolForm.payment_provider,
         })
         .eq("id", school.id);
 
@@ -224,6 +229,26 @@ export default function Settings() {
                   placeholder="#6324b2"
                 />
               </div>
+            </div>
+            <div>
+              <Label>Gateway de Pagamento</Label>
+              <Select
+                value={schoolForm.payment_provider}
+                onValueChange={(value: "MOCK" | "ASAAS_SANDBOX") =>
+                  setSchoolForm({ ...schoolForm, payment_provider: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="MOCK">MOCK (Teste)</SelectItem>
+                  <SelectItem value="ASAAS_SANDBOX">ASAAS Sandbox</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground mt-1">
+                Escolha o provedor de pagamentos para cobranças
+              </p>
             </div>
             <Button
               onClick={school ? handleUpdateSchool : handleCreateSchool}

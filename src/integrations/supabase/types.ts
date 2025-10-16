@@ -404,6 +404,7 @@ export type Database = {
           notes: string | null
           paid_date: string | null
           payment_method: Database["public"]["Enums"]["payment_method"] | null
+          payment_reference: string | null
           pix_code: string | null
           reference_month: string
           status: Database["public"]["Enums"]["payment_status"]
@@ -419,6 +420,7 @@ export type Database = {
           notes?: string | null
           paid_date?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"] | null
+          payment_reference?: string | null
           pix_code?: string | null
           reference_month: string
           status?: Database["public"]["Enums"]["payment_status"]
@@ -434,6 +436,7 @@ export type Database = {
           notes?: string | null
           paid_date?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"] | null
+          payment_reference?: string | null
           pix_code?: string | null
           reference_month?: string
           status?: Database["public"]["Enums"]["payment_status"]
@@ -605,6 +608,7 @@ export type Database = {
           id: string
           logo_url: string | null
           name: string
+          payment_provider: string | null
           primary_color: string | null
           updated_at: string
         }
@@ -617,6 +621,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name: string
+          payment_provider?: string | null
           primary_color?: string | null
           updated_at?: string
         }
@@ -629,6 +634,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
+          payment_provider?: string | null
           primary_color?: string | null
           updated_at?: string
         }
