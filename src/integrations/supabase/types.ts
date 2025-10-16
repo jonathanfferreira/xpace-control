@@ -64,18 +64,21 @@ export type Database = {
           class_id: string
           enrolled_at: string
           id: string
+          school_id: string
           student_id: string
         }
         Insert: {
           class_id: string
           enrolled_at?: string
           id?: string
+          school_id: string
           student_id: string
         }
         Update: {
           class_id?: string
           enrolled_at?: string
           id?: string
+          school_id?: string
           student_id?: string
         }
         Relationships: [
@@ -84,6 +87,13 @@ export type Database = {
             columns: ["class_id"]
             isOneToOne: false
             referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_students_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
             referencedColumns: ["id"]
           },
           {
