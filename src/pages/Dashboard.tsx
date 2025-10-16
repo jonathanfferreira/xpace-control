@@ -1,160 +1,143 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
+import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, GraduationCap, Calendar, TrendingUp } from "lucide-react";
-import xpaceLogo from "@/assets/xpace-logo.png";
-import type { User } from "@supabase/supabase-js";
+import { Users, GraduationCap, CheckSquare, TrendingUp } from "lucide-react";
 
-const Dashboard = () => {
+export default function Dashboard() {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalStudents: 0,
+    totalClasses: 0,
+    attendancesLast7Days: 0,
+  });
 
   useEffect(() => {
-    // Check authentication
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        navigate("/auth");
-      } else {
-        setUser(session.user);
-      }
+    checkAuth();
+    fetchStats();
+  }, []);
+
+  const checkAuth = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      navigate("/auth");
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      // Get total students
+      const { count: studentsCount } = await supabase
+        .from("students")
+        .select("*", { count: "exact", head: true });
+
+      // Get total classes
+      const { count: classesCount } = await supabase
+        .from("classes")
+        .select("*", { count: "exact", head: true });
+
+      // Get attendances from last 7 days
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const { count: attendancesCount } = await supabase
+        .from("attendances")
+        .select("*", { count: "exact", head: true })
+        .gte("attendance_date", sevenDaysAgo.toISOString().split("T")[0]);
+
+      setStats({
+        totalStudents: studentsCount || 0,
+        totalClasses: classesCount || 0,
+        attendancesLast7Days: attendancesCount || 0,
+      });
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    } finally {
       setLoading(false);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
-        navigate("/auth");
-      } else {
-        setUser(session.user);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/");
+    }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
+      <AppLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      </AppLayout>
     );
   }
 
-  const stats = [
+  const statCards = [
     {
       title: "Total de Alunos",
-      value: "0",
+      value: stats.totalStudents,
       icon: Users,
-      description: "Nenhum aluno cadastrado ainda",
+      description: "Alunos cadastrados",
+      color: "text-blue-600",
     },
     {
-      title: "Turmas Ativas",
-      value: "0",
+      title: "Total de Turmas",
+      value: stats.totalClasses,
       icon: GraduationCap,
-      description: "Nenhuma turma criada",
+      description: "Turmas ativas",
+      color: "text-purple-600",
     },
     {
-      title: "Aulas Esta Semana",
-      value: "0",
-      icon: Calendar,
-      description: "Nenhuma aula agendada",
-    },
-    {
-      title: "Taxa de Presença",
-      value: "0%",
-      icon: TrendingUp,
-      description: "Sem dados de presença",
+      title: "Presenças (7 dias)",
+      value: stats.attendancesLast7Days,
+      icon: CheckSquare,
+      description: "Últimos 7 dias",
+      color: "text-green-600",
     },
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src={xpaceLogo} alt="Xpace Control" className="h-10 w-auto" />
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground">
-              {user?.user_metadata?.full_name || user?.email}
-            </span>
-            <Button variant="outline" onClick={handleLogout}>
-              Sair
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="container py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
+    <AppLayout>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground">
-            Bem-vindo ao painel de controle da sua escola
+            Bem-vindo ao Xpace Control. Visão geral da sua escola.
           </p>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-          {stats.map((stat, index) => (
-            <Card key={index} className="hover:shadow-lg transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {stat.title}
-                </CardTitle>
-                <stat.icon className="h-4 w-4 text-primary" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold mb-1">{stat.value}</div>
-                <p className="text-xs text-muted-foreground">{stat.description}</p>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="grid gap-6 md:grid-cols-3">
+          {statCards.map((stat) => {
+            const Icon = stat.icon;
+            return (
+              <Card key={stat.title} className="hover:shadow-lg transition-shadow">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    {stat.title}
+                  </CardTitle>
+                  <Icon className={`h-5 w-5 ${stat.color}`} />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">{stat.value}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {stat.description}
+                  </p>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
-        {/* Welcome Message */}
         <Card className="gradient-xpace text-white">
-          <CardContent className="pt-6">
-            <h2 className="text-2xl font-bold mb-4">
-              Bem-vindo ao Xpace Control! 🎉
-            </h2>
-            <p className="mb-4 text-white/90">
-              Este é o início da sua jornada com a plataforma. Em breve você poderá:
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Próximas Funcionalidades
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-white/90">
+              Em breve: Relatórios detalhados, mensagens automáticas, gestão de eventos e muito mais!
             </p>
-            <ul className="space-y-2 mb-6 text-white/90">
-              <li className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-white/60"></div>
-                Cadastrar alunos e responsáveis
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-white/60"></div>
-                Criar e gerenciar turmas
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-white/60"></div>
-                Marcar presenças via QR Code
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-white/60"></div>
-                Controlar pagamentos e mensalidades
-              </li>
-            </ul>
-            <Button variant="secondary" size="sm">
-              Começar Configuração
-            </Button>
           </CardContent>
         </Card>
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
-};
-
-export default Dashboard;
+}

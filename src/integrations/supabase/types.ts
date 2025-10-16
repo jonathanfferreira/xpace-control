@@ -343,6 +343,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      class_belongs_to_user_school: {
+        Args: { _class_id: string; _user_id: string }
+        Returns: boolean
+      }
       get_user_school: {
         Args: { _user_id: string }
         Returns: string
@@ -352,6 +356,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      user_has_student_in_class: {
+        Args: { _class_id: string; _user_id: string }
         Returns: boolean
       }
     }
