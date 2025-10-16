@@ -1,10 +1,10 @@
-import { AppLayout } from "@/components/layout/AppLayout";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText } from "lucide-react";
 
 export default function TermsOfService() {
   return (
-    <AppLayout>
+    <DashboardLayout>
       <div className="max-w-4xl mx-auto space-y-6">
         <div>
           <h1 className="text-3xl md:text-4xl font-bold flex items-center gap-2">
@@ -151,6 +151,6 @@ export default function TermsOfService() {
           </CardContent>
         </Card>
       </div>
-    </AppLayout>
+    </DashboardLayout>
   );
 }

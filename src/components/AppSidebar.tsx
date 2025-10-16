@@ -11,6 +11,7 @@ import {
   Settings,
   LogOut,
   Bell,
+  Building2,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -35,9 +36,10 @@ const adminItems = [
   { title: 'Presenças', url: '/presencas', icon: ClipboardCheck },
   { title: 'Pagamentos', url: '/pagamentos', icon: CreditCard },
   { title: 'Relatórios', url: '/relatorios', icon: BarChart3 },
-  { title: 'CRM / Leads', url: '/leads', icon: UserPlus },
   { title: 'Eventos', url: '/eventos', icon: Calendar },
-  { title: 'Notificações & IA', url: '/notificacoes', icon: Bell },
+  { title: 'Leads', url: '/leads', icon: UserPlus },
+  { title: 'Notificações', url: '/notificacoes', icon: Bell },
+  { title: 'Unidades', url: '/unidades', icon: Building2 },
   { title: 'Configurações', url: '/configuracoes', icon: Settings },
 ];
 

@@ -182,6 +182,11 @@ const App = () => (
                   <Leads />
                 </ProtectedRoute>
               } />
+              <Route path="/unidades" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <Units />
+                </ProtectedRoute>
+              } />
 
               {/* Teacher routes */}
               <Route path="/professor/turmas" element={
@@ -195,7 +200,7 @@ const App = () => (
                 </ProtectedRoute>
               } />
 
-              {/* Guardian routes */}
+              {/* Guardian routes - Portuguese & English */}
               <Route path="/responsavel/alunos" element={
                 <ProtectedRoute allowedRoles={['guardian']}>
                   <GuardianStudents />
@@ -206,9 +211,21 @@ const App = () => (
                   <GuardianStudents />
                 </ProtectedRoute>
               } />
+              
+              <Route path="/responsavel/presencas" element={
+                <ProtectedRoute allowedRoles={['guardian']}>
+                  <GuardianAttendance />
+                </ProtectedRoute>
+              } />
               <Route path="/guardian/attendance" element={
                 <ProtectedRoute allowedRoles={['guardian']}>
                   <GuardianAttendance />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/responsavel/pagamentos" element={
+                <ProtectedRoute allowedRoles={['guardian']}>
+                  <GuardianPayments />
                 </ProtectedRoute>
               } />
               <Route path="/guardian/payments" element={

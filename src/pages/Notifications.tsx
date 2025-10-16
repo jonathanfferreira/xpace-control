@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { AppLayout } from "@/components/layout/AppLayout";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -252,7 +252,7 @@ export default function Notifications() {
   };
 
   return (
-    <AppLayout>
+    <DashboardLayout>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl md:text-4xl font-bold">Notificações e Alertas</h1>
@@ -519,6 +519,6 @@ export default function Notifications() {
           </CardContent>
         </Card>
       </div>
-    </AppLayout>
+    </DashboardLayout>
   );
 }

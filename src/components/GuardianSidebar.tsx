@@ -12,9 +12,9 @@ import {
 } from '@/components/ui/sidebar';
 
 const guardianItems = [
-  { title: 'Meus Alunos', url: '/guardian/students', icon: Users },
-  { title: 'Frequência', url: '/guardian/attendance', icon: Calendar },
-  { title: 'Pagamentos', url: '/guardian/payments', icon: CreditCard },
+  { title: 'Meus Alunos', url: '/responsavel/alunos', icon: Users },
+  { title: 'Frequência', url: '/responsavel/presencas', icon: Calendar },
+  { title: 'Pagamentos', url: '/responsavel/pagamentos', icon: CreditCard },
 ];
 
 export function GuardianSidebar() {

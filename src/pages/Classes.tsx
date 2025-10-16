@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { AppLayout } from "@/components/layout/AppLayout";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -118,16 +118,16 @@ export default function Classes() {
 
   if (loading) {
     return (
-      <AppLayout>
+      <DashboardLayout>
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
-      </AppLayout>
+      </DashboardLayout>
     );
   }
 
   return (
-    <AppLayout>
+    <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -264,6 +264,6 @@ export default function Classes() {
           </DialogContent>
         </Dialog>
       </div>
-    </AppLayout>
+    </DashboardLayout>
   );
 }

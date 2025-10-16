@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { AppLayout } from "@/components/layout/AppLayout";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -202,11 +202,11 @@ export default function Payments() {
 
   if (loading) {
     return (
-      <AppLayout>
+      <DashboardLayout>
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
-      </AppLayout>
+      </DashboardLayout>
     );
   }
 
@@ -223,7 +223,7 @@ export default function Payments() {
   }).length;
 
   return (
-    <AppLayout>
+    <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
         <div>
@@ -409,6 +409,6 @@ export default function Payments() {
           </CardContent>
         </Card>
       </div>
-    </AppLayout>
+    </DashboardLayout>
   );
 }
