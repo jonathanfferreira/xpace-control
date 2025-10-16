@@ -1,18 +1,22 @@
 {
-  "name": "Xpace Control",
-  "short_name": "Xpace",
+  "name": "XPACE Control",
+  "short_name": "XPACE",
   "description": "Sistema de gestão completo para escolas de dança",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#6324b2",
+  "background_color": "#ffffff",
   "theme_color": "#6324b2",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "src": "/05.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/05b.png",
+      "sizes": "32x32",
+      "type": "image/png"
     }
   ]
 }

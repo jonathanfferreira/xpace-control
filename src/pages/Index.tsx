@@ -1,12 +1,12 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Users, Calendar, QrCode, CreditCard, BarChart3, Shield, Star, CheckCircle2, Sparkles, TrendingUp, Clock, Mail } from "lucide-react";
-import xpaceLogo from "@/assets/xpace-logo.png";
 import heroDance from "@/assets/hero-dance.jpg";
 import { useDemo } from "@/contexts/DemoContext";
 import { toast } from "sonner";
 import { LeadForm } from "@/components/LeadForm";
 import { SEOHead } from "@/components/SEOHead";
+import { useEffect } from "react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -17,6 +17,25 @@ const Index = () => {
     toast.success("Entrando no modo demonstração...");
     setTimeout(() => navigate("/dashboard"), 500);
   };
+
+  // Dynamic OG image switching based on theme
+  useEffect(() => {
+    const isDark = document.documentElement.classList.contains('dark') ||
+                   window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    const setMeta = (nameOrProp: 'name' | 'property', attr: string, val: string) => {
+      const el = document.querySelector(`meta[${nameOrProp}="${attr}"]`);
+      if (el) el.setAttribute("content", val);
+    };
+
+    if (isDark) {
+      setMeta("property", "og:image", "/og-dark.png");
+      setMeta("name", "twitter:image", "/og-dark.png");
+    } else {
+      setMeta("property", "og:image", "/og-light.png");
+      setMeta("name", "twitter:image", "/og-light.png");
+    }
+  }, []);
 
   const features = [
     {
@@ -60,10 +79,19 @@ const Index = () => {
       />
       <div className="min-h-screen bg-background">
         {/* Header */}
-        <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+        <header className="sticky top-0 z-50 bg-white/80 dark:bg-[#0f1115]/80 backdrop-blur border-b border-border">
         <div className="container flex h-16 items-center justify-between px-4">
           <Link to="/" className="flex items-center gap-2">
-            <img src={xpaceLogo} alt="Xpace Control" className="h-8 md:h-10 w-auto" />
+            <img
+              src="/xpace-black.png"
+              alt="XPACE Control"
+              className="h-6 md:h-8 w-auto object-contain dark:hidden transition-opacity duration-300"
+            />
+            <img
+              src="/xpace-white.png"
+              alt="XPACE Control"
+              className="h-6 md:h-8 w-auto object-contain hidden dark:block transition-opacity duration-300"
+            />
           </Link>
           <nav className="flex items-center gap-2 md:gap-4">
             <Link to="/pricing" className="hidden sm:block">
@@ -494,28 +522,52 @@ const Index = () => {
       </section>
 
       {/* Footer */}
-      <footer className="border-t py-8 md:py-12">
+      <footer className="bg-background border-t border-border text-foreground py-8 md:py-12">
         <div className="container px-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex flex-col md:flex-row items-center gap-2 text-center md:text-left">
-              <img src={xpaceLogo} alt="Xpace Control" className="h-6 md:h-8 w-auto" />
-              <span className="text-xs md:text-sm text-muted-foreground">
-                © 2025 Xpace Control. Todos os direitos reservados.
+            <div className="flex flex-col items-center md:items-start gap-4 text-center md:text-left">
+              <div className="flex items-center gap-2">
+                <img 
+                  src="/xpace-black.png" 
+                  alt="XPACE Control" 
+                  className="h-6 w-auto object-contain dark:hidden" 
+                />
+                <img 
+                  src="/xpace-white.png" 
+                  alt="XPACE Control" 
+                  className="h-6 w-auto object-contain hidden dark:block" 
+                />
+              </div>
+              <p className="text-xs md:text-sm text-muted-foreground max-w-md">
+                Gestão inteligente e moderna para escolas de dança. Controle de presenças, turmas, alunos e pagamentos em uma única plataforma.
+              </p>
+              <span className="text-xs text-muted-foreground">
+                © 2025 XPACE Control. Todos os direitos reservados.
               </span>
             </div>
-            <div className="flex flex-wrap gap-4 md:gap-6 justify-center md:justify-start text-center">
-              <a href="#funcionalidades" className="text-xs md:text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Funcionalidades
-              </a>
-              <a href="#depoimentos" className="text-xs md:text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Depoimentos
-              </a>
-              <Link to="/auth" className="text-xs md:text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Login
-              </Link>
-              <a href="mailto:contato@xpacecontrol.com" className="text-xs md:text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Contato
-              </a>
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-wrap gap-4 md:gap-6 justify-center md:justify-end text-center">
+                <a href="#funcionalidades" className="text-xs md:text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Funcionalidades
+                </a>
+                <a href="#depoimentos" className="text-xs md:text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Depoimentos
+                </a>
+                <Link to="/pricing" className="text-xs md:text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Preços
+                </Link>
+              </div>
+              <div className="flex flex-wrap gap-4 md:gap-6 justify-center md:justify-end text-center">
+                <Link to="/termos" className="text-xs md:text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Termos de Uso
+                </Link>
+                <Link to="/privacidade" className="text-xs md:text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Privacidade
+                </Link>
+                <a href="mailto:contato@xpacecontrol.com" className="text-xs md:text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Suporte
+                </a>
+              </div>
             </div>
           </div>
         </div>

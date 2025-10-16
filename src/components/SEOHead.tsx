@@ -9,13 +9,13 @@ interface SEOHeadProps {
 }
 
 export function SEOHead({
-  title = "Xpace Control - Sistema de Gestão Completo para Escolas de Dança",
-  description = "Transforme a gestão da sua escola de dança com o Xpace Control. Controle de presenças via QR Code, gestão de pagamentos, turmas e alunos em uma plataforma moderna e intuitiva.",
-  image = "https://xpacecontrol.com.br/og-image.jpg",
+  title = "XPACE Control - Sistema de Gestão Completo para Escolas de Dança",
+  description = "Transforme a gestão da sua escola de dança com o XPACE Control. Controle de presenças via QR Code, gestão de pagamentos, turmas e alunos em uma plataforma moderna e intuitiva.",
+  image = "/og-light.png",
   path = "",
   keywords = "gestão escolas dança, controle presença QR Code, sistema pagamentos escola, gestão alunos turmas, software escola dança",
 }: SEOHeadProps) {
-  const url = `https://xpacecontrol.com.br${path}`;
+  const url = `https://xpace-control.lovable.app${path}`;
 
   return (
     <Helmet>
@@ -31,8 +31,10 @@ export function SEOHead({
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
       <meta property="og:image" content={image} />
-      <meta property="og:site_name" content="Xpace Control" />
+      <meta property="og:site_name" content="XPACE Control" />
       <meta property="og:locale" content="pt_BR" />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
 
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />

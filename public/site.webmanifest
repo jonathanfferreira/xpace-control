@@ -1,0 +1,20 @@
+{
+  "name": "XPACE Control",
+  "short_name": "XPACE",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6324b2",
+  "icons": [
+    { 
+      "src": "/05.png", 
+      "sizes": "32x32", 
+      "type": "image/png" 
+    },
+    { 
+      "src": "/05b.png", 
+      "sizes": "32x32", 
+      "type": "image/png" 
+    }
+  ]
+}
