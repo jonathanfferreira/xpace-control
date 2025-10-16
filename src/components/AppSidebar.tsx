@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/sidebar';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import logo from '@/assets/xpace-logo.png';
+// Logo is now loaded from /public
 
 const adminItems = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
@@ -91,7 +91,11 @@ export function AppSidebar() {
     <Sidebar className={collapsed ? 'w-14' : 'w-64'} collapsible="icon">
       <SidebarContent>
         <div className={`p-4 flex items-center ${collapsed ? 'justify-center' : 'gap-2'}`}>
-          <img src={logo} alt="Xpace" className={collapsed ? 'h-8' : 'h-10'} />
+          <img 
+            src="/xpace-white.png" 
+            alt="XPACE Control" 
+            className={collapsed ? 'h-8' : 'h-10'} 
+          />
         </div>
 
         <SidebarGroup>

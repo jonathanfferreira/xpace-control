@@ -9,7 +9,7 @@ import { Loader2, School, Building2, Users, GraduationCap, Mail, Check } from 'l
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import Papa from 'papaparse';
-import logo from '@/assets/xpace-logo.png';
+// Logo is now loaded from /public
 
 interface OnboardingStep {
   title: string;
@@ -526,7 +526,10 @@ export default function Onboarding() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader className="text-center space-y-4">
-          <img src={logo} alt="Xpace" className="h-12 mx-auto" />
+          <div className="flex items-center justify-center gap-2">
+            <img src="/xpace-black.png" alt="XPACE Control" className="h-12 dark:hidden" />
+            <img src="/xpace-white.png" alt="XPACE Control" className="h-12 hidden dark:block" />
+          </div>
           <div>
             <CardTitle className="text-2xl">Configuração Inicial</CardTitle>
             <CardDescription>

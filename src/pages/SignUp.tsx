@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { trackSignupCompleted } from '@/lib/analytics';
-import logo from '@/assets/xpace-logo.png';
+// Logo is now loaded from /public
 
 export default function SignUp() {
   const [fullName, setFullName] = useState('');
@@ -50,7 +50,10 @@ export default function SignUp() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-4 text-center">
-          <img src={logo} alt="Xpace" className="h-12 mx-auto" />
+          <div className="flex items-center justify-center gap-2">
+            <img src="/xpace-black.png" alt="XPACE Control" className="h-12 dark:hidden" />
+            <img src="/xpace-white.png" alt="XPACE Control" className="h-12 hidden dark:block" />
+          </div>
           <div>
             <CardTitle className="text-2xl">Criar Conta</CardTitle>
             <CardDescription>

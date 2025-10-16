@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { z } from "zod";
-import xpaceLogo from "@/assets/xpace-logo.png";
+// Logo is now loaded from /public
 
 const signUpSchema = z.object({
   fullName: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
@@ -120,7 +120,10 @@ const Auth = () => {
       <Card className="w-full max-w-md animate-slide-up">
         <CardHeader className="text-center">
           <Link to="/" className="flex justify-center mb-4">
-            <img src={xpaceLogo} alt="Xpace Control" className="h-12 w-auto" />
+            <div className="flex items-center gap-2">
+              <img src="/xpace-black.png" alt="XPACE Control" className="h-12 w-auto dark:hidden" />
+              <img src="/xpace-white.png" alt="XPACE Control" className="h-12 w-auto hidden dark:block" />
+            </div>
           </Link>
           <CardTitle className="text-2xl">
             {mode === "signin" ? "Bem-vindo de volta!" : "Criar nova conta"}

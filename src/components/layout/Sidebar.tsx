@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useState } from "react";
 import { useDemo } from "@/contexts/DemoContext";
-import xpaceLogo from "@/assets/xpace-logo.png";
+// Logo is now loaded from /public
 
 const menuItems = [
   { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
@@ -68,8 +68,8 @@ export function Sidebar() {
         {/* Logo */}
         <div className="p-6 border-b border-white/10">
           <img 
-            src={xpaceLogo}
-            alt="Xpace Control" 
+            src="/xpace-white.png"
+            alt="XPACE Control" 
             className="h-12 w-auto"
           />
           {isDemoMode && (
