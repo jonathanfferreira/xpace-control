@@ -15,6 +15,7 @@ import { Plus, Search, Pencil, Trash2, Download } from 'lucide-react';
 import { studentSchema, type StudentFormData } from '@/lib/validations';
 import { useSubscription } from '@/hooks/useSubscription';
 import { SubscriptionLimitWarning } from '@/components/SubscriptionLimitWarning';
+import { StudentPointsCell } from '@/components/students/StudentPointsCell';
 
 export default function Students() {
   const { user } = useAuth();
@@ -431,6 +432,7 @@ Bruno Santos,bruno@email.com,(11) 99999-2222,2008-03-22`;
                 <TableHead>Email</TableHead>
                 <TableHead>Telefone</TableHead>
                 <TableHead>Unidade</TableHead>
+                <TableHead>Pontos</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
@@ -438,7 +440,7 @@ Bruno Santos,bruno@email.com,(11) 99999-2222,2008-03-22`;
             <TableBody>
               {filteredStudents.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground">
                     Nenhum aluno encontrado
                   </TableCell>
                 </TableRow>
@@ -449,6 +451,9 @@ Bruno Santos,bruno@email.com,(11) 99999-2222,2008-03-22`;
                     <TableCell>{student.email || '-'}</TableCell>
                     <TableCell>{student.phone || '-'}</TableCell>
                     <TableCell>{student.school_units?.name || '-'}</TableCell>
+                    <TableCell>
+                      <StudentPointsCell studentId={student.id} />
+                    </TableCell>
                     <TableCell>
                       <Badge variant={student.active ? 'default' : 'secondary'}>
                         {student.active ? 'Ativo' : 'Inativo'}

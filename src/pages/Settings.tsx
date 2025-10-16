@@ -271,6 +271,60 @@ export default function Settings() {
             </Button>
           </CardContent>
         </Card>
+
+        {/* WhatsApp Notifications */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Notificações WhatsApp</CardTitle>
+            <CardDescription>
+              Configure lembretes automáticos por WhatsApp para alunos
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div>
+                <h4 className="font-medium">Lembrete de Aula (1h antes)</h4>
+                <p className="text-sm text-muted-foreground">
+                  Envio automático 1 hora antes da aula começar
+                </p>
+              </div>
+              <div className="px-3 py-1 bg-green-500/10 text-green-500 rounded-full text-sm font-medium">
+                Ativo
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div>
+                <h4 className="font-medium">Pagamento Atrasado</h4>
+                <p className="text-sm text-muted-foreground">
+                  Lembrete quando pagamento está vencido há mais de 5 dias
+                </p>
+              </div>
+              <div className="px-3 py-1 bg-green-500/10 text-green-500 rounded-full text-sm font-medium">
+                Ativo
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div>
+                <h4 className="font-medium">Confirmação de Matrícula</h4>
+                <p className="text-sm text-muted-foreground">
+                  Mensagem de boas-vindas ao matricular novo aluno
+                </p>
+              </div>
+              <div className="px-3 py-1 bg-green-500/10 text-green-500 rounded-full text-sm font-medium">
+                Ativo
+              </div>
+            </div>
+
+            <div className="p-4 bg-muted/50 rounded-lg">
+              <p className="text-sm text-muted-foreground">
+                💡 <strong>Nota:</strong> As mensagens WhatsApp são enviadas automaticamente. 
+                Para configurar API do WhatsApp (Twilio/Evolution), entre em contato com o suporte.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </AppLayout>
   );

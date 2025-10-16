@@ -1,4 +1,4 @@
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { GuardianLayout } from '@/components/layout/GuardianLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -93,16 +93,16 @@ export default function GuardianPayments() {
 
   if (loading) {
     return (
-      <DashboardLayout>
+      <GuardianLayout>
         <div className="flex items-center justify-center h-64">
           <div className="text-muted-foreground">Carregando...</div>
         </div>
-      </DashboardLayout>
+      </GuardianLayout>
     );
   }
 
   return (
-    <DashboardLayout>
+    <GuardianLayout>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Pagamentos</h1>
@@ -159,6 +159,6 @@ export default function GuardianPayments() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </GuardianLayout>
   );
 }
