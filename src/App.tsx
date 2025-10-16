@@ -38,7 +38,8 @@ import DemoLogin from "./pages/DemoLogin";
 import DemoReset from "./pages/DemoReset";
 
 import TeacherClasses from "./pages/teacher/TeacherClasses";
-import QRCodeDisplay from "./pages/teacher/QRCodeDisplay";
+import TeacherAttendance from "./pages/teacher/TeacherAttendance";
+import TeacherSchedule from "./pages/teacher/TeacherSchedule";
 
 import GuardianStudents from "./pages/guardian/GuardianStudents";
 import GuardianAttendance from "./pages/guardian/GuardianAttendance";
@@ -200,9 +201,14 @@ const App = () => (
                   <TeacherClasses />
                 </ProtectedRoute>
               } />
-              <Route path="/professor/qrcode" element={
+              <Route path="/professor/presencas" element={
                 <ProtectedRoute allowedRoles={['teacher']}>
-                  <QRCodeDisplay />
+                  <TeacherAttendance />
+                </ProtectedRoute>
+              } />
+              <Route path="/professor/agenda" element={
+                <ProtectedRoute allowedRoles={['teacher']}>
+                  <TeacherSchedule />
                 </ProtectedRoute>
               } />
 

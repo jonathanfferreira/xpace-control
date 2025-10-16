@@ -46,7 +46,7 @@ const adminItems = [
 const teacherItems = [
   { title: 'Minhas Turmas', url: '/professor/turmas', icon: GraduationCap },
   { title: 'Presenças', url: '/professor/presencas', icon: ClipboardCheck },
-  { title: 'QR Code', url: '/professor/qrcode', icon: ClipboardCheck },
+  { title: 'Agenda', url: '/professor/agenda', icon: Calendar },
 ];
 
 const guardianItems = [
