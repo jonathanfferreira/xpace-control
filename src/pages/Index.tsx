@@ -14,9 +14,7 @@ const Index = () => {
   const { setDemoMode } = useDemo();
 
   const handleDemoClick = () => {
-    setDemoMode(true);
-    toast.success("Entrando no modo demonstração...");
-    setTimeout(() => navigate("/dashboard"), 500);
+    navigate("/demo-login");
   };
 
   // Dynamic OG image switching based on theme

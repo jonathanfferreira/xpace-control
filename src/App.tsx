@@ -9,6 +9,7 @@ import { DemoProvider } from "@/contexts/DemoContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { UnitProvider } from "@/contexts/UnitContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { DemoBadge } from "@/components/DemoBadge";
 import { initGA4, initMetaPixel, trackPageView } from "@/lib/analytics";
 
 import Index from "./pages/Index";
@@ -33,6 +34,8 @@ import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import ResetPassword from "./pages/ResetPassword";
 import Leads from "./pages/Leads";
+import DemoLogin from "./pages/DemoLogin";
+import DemoReset from "./pages/DemoReset";
 
 import TeacherClasses from "./pages/teacher/TeacherClasses";
 import QRCodeDisplay from "./pages/teacher/QRCodeDisplay";
@@ -73,11 +76,14 @@ const App = () => (
             <TooltipProvider>
               <Toaster />
               <Sonner />
+              <DemoBadge />
               <BrowserRouter>
                 <AnalyticsTracker />
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<Index />} />
+              <Route path="/demo-login" element={<DemoLogin />} />
+              <Route path="/admin/demo-reset" element={<DemoReset />} />
               <Route path="/entrar" element={<SignIn />} />
               <Route path="/cadastro" element={<SignUp />} />
               <Route path="/recuperar" element={<ResetPassword />} />
