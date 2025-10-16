@@ -19,6 +19,7 @@ import Notifications from "./pages/Notifications";
 import Units from "./pages/Units";
 import Settings from "./pages/Settings";
 import Reports from "./pages/Reports";
+import Events from "./pages/Events";
 import NotFound from "./pages/NotFound";
 
 import SignIn from "./pages/SignIn";
@@ -127,6 +128,11 @@ const App = () => (
               <Route path="/relatorios" element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <Reports />
+                </ProtectedRoute>
+              } />
+              <Route path="/eventos" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <Events />
                 </ProtectedRoute>
               } />
               <Route path="/leads" element={
