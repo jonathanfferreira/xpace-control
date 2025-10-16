@@ -23,6 +23,7 @@ import NotFound from "./pages/NotFound";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import ResetPassword from "./pages/ResetPassword";
+import Leads from "./pages/Leads";
 
 import TeacherClasses from "./pages/teacher/TeacherClasses";
 import QRCodeDisplay from "./pages/teacher/QRCodeDisplay";
@@ -115,6 +116,11 @@ const App = () => (
               <Route path="/settings" element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <Settings />
+                </ProtectedRoute>
+              } />
+              <Route path="/leads" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <Leads />
                 </ProtectedRoute>
               } />
 
