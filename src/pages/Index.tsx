@@ -6,6 +6,7 @@ import { useDemo } from "@/contexts/DemoContext";
 import { toast } from "sonner";
 import { LeadForm } from "@/components/LeadForm";
 import { SEOHead } from "@/components/SEOHead";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useEffect } from "react";
 
 const Index = () => {
@@ -100,6 +101,7 @@ const Index = () => {
             <Link to="/auth" className="hidden sm:block">
               <Button variant="ghost" size="sm" className="md:h-10">Entrar</Button>
             </Link>
+            <ThemeToggle />
             <Link to="/auth?mode=signup">
               <Button variant="hero" size="sm" className="md:h-10">
                 <span className="hidden sm:inline">Começar Agora</span>
