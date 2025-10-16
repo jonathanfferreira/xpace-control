@@ -23,9 +23,11 @@ type Student = Database["public"]["Tables"]["students"]["Row"];
 export default function Payments() {
   const navigate = useNavigate();
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [filteredPayments, setFilteredPayments] = useState<Payment[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [paymentProvider, setPaymentProvider] = useState<"MOCK" | "ASAAS_SANDBOX">("MOCK");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newPayment, setNewPayment] = useState({
     student_id: "",
@@ -60,12 +62,34 @@ export default function Payments() {
 
       if (error) throw error;
       setPayments(data || []);
+      applyFilters(data || [], statusFilter);
     } catch (error: any) {
       toast.error("Erro ao carregar pagamentos");
     } finally {
       setLoading(false);
     }
   };
+
+  const applyFilters = (paymentsData: Payment[], filter: string) => {
+    let filtered = paymentsData;
+
+    if (filter !== "all") {
+      if (filter === "overdue") {
+        filtered = paymentsData.filter((p) => {
+          if (p.status === "paid") return false;
+          return new Date() > new Date(p.due_date);
+        });
+      } else {
+        filtered = paymentsData.filter((p) => p.status === filter);
+      }
+    }
+
+    setFilteredPayments(filtered);
+  };
+
+  useEffect(() => {
+    applyFilters(payments, statusFilter);
+  }, [statusFilter, payments]);
 
   const fetchStudents = async () => {
     try {
@@ -282,13 +306,25 @@ export default function Payments() {
                 <CreditCard className="h-5 w-5" />
                 Lista de Pagamentos
               </CardTitle>
-              <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button className="gradient-xpace">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Nova Cobrança
-                  </Button>
-                </DialogTrigger>
+              <div className="flex items-center gap-2">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Filtrar por status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="paid">Pagos</SelectItem>
+                    <SelectItem value="pending">Pendentes</SelectItem>
+                    <SelectItem value="overdue">Atrasados</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="gradient-xpace">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Nova Cobrança
+                    </Button>
+                  </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Criar Nova Cobrança</DialogTitle>

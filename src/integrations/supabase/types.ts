@@ -1115,6 +1115,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_guardian_of_student: {
+        Args: { _guardian_user_id: string; _student_id: string }
+        Returns: boolean
+      }
       teacher_has_student: {
         Args: { _student_id: string; _teacher_id: string }
         Returns: boolean
