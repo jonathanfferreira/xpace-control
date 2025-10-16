@@ -5,6 +5,7 @@ import xpaceLogo from "@/assets/xpace-logo.png";
 import heroDance from "@/assets/hero-dance.jpg";
 import { useDemo } from "@/contexts/DemoContext";
 import { toast } from "sonner";
+import { LeadForm } from "@/components/LeadForm";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -58,6 +59,9 @@ const Index = () => {
             <img src={xpaceLogo} alt="Xpace Control" className="h-8 md:h-10 w-auto" />
           </Link>
           <nav className="flex items-center gap-2 md:gap-4">
+            <Link to="/pricing" className="hidden sm:block">
+              <Button variant="ghost" size="sm" className="md:h-10">Preços</Button>
+            </Link>
             <Link to="/auth" className="hidden sm:block">
               <Button variant="ghost" size="sm" className="md:h-10">Entrar</Button>
             </Link>
@@ -197,23 +201,37 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Lead Form Section */}
+      <section className="py-12 md:py-20 bg-muted/30">
+        <div className="container px-4">
+          <LeadForm />
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-12 md:py-20">
         <div className="container px-4">
           <div className="relative overflow-hidden rounded-2xl md:rounded-3xl gradient-xpace p-8 md:p-12 lg:p-20 text-center">
             <div className="relative z-10">
               <h2 className="text-2xl md:text-3xl lg:text-5xl font-bold text-white mb-4">
-                Criar Conta Grátis
+                Veja nossos planos
               </h2>
               <p className="text-base md:text-lg text-white/90 mb-6 md:mb-8 max-w-2xl mx-auto">
-                Comece hoje mesmo e transforme a gestão da sua escola de dança
+                Escolha o plano ideal para sua escola e comece hoje mesmo
               </p>
-              <Link to="/auth?mode=signup">
-                <Button size="lg" variant="secondary" className="group w-full sm:w-auto">
-                  Começar Agora
-                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link to="/pricing">
+                  <Button size="lg" variant="secondary" className="group w-full sm:w-auto">
+                    Ver Planos e Preços
+                    <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </Link>
+                <Link to="/auth?mode=signup">
+                  <Button size="lg" variant="outline" className="w-full sm:w-auto bg-white/10 text-white border-white/20 hover:bg-white/20">
+                    Começar Grátis
+                  </Button>
+                </Link>
+              </div>
             </div>
             <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
           </div>

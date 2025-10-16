@@ -148,6 +148,42 @@ export type Database = {
           },
         ]
       }
+      leads: {
+        Row: {
+          city: string
+          created_at: string
+          email: string
+          id: string
+          notes: string | null
+          school_name: string
+          status: string | null
+          updated_at: string
+          whatsapp: string
+        }
+        Insert: {
+          city: string
+          created_at?: string
+          email: string
+          id?: string
+          notes?: string | null
+          school_name: string
+          status?: string | null
+          updated_at?: string
+          whatsapp: string
+        }
+        Update: {
+          city?: string
+          created_at?: string
+          email?: string
+          id?: string
+          notes?: string | null
+          school_name?: string
+          status?: string | null
+          updated_at?: string
+          whatsapp?: string
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount: number
@@ -234,6 +270,9 @@ export type Database = {
       schools: {
         Row: {
           admin_id: string
+          city: string | null
+          contact_email: string | null
+          contact_phone: string | null
           created_at: string
           id: string
           logo_url: string | null
@@ -243,6 +282,9 @@ export type Database = {
         }
         Insert: {
           admin_id: string
+          city?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
           created_at?: string
           id?: string
           logo_url?: string | null
@@ -252,6 +294,9 @@ export type Database = {
         }
         Update: {
           admin_id?: string
+          city?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
           created_at?: string
           id?: string
           logo_url?: string | null

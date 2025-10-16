@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { DemoProvider } from "@/contexts/DemoContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import Pricing from "./pages/Pricing";
 import Dashboard from "./pages/Dashboard";
 import Students from "./pages/Students";
 import Classes from "./pages/Classes";
@@ -26,6 +27,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/pricing" element={<Pricing />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/students" element={<Students />} />
             <Route path="/classes" element={<Classes />} />
