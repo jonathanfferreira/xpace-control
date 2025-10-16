@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { AppLayout } from "@/components/layout/AppLayout";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, GraduationCap, CheckSquare, TrendingUp, DollarSign } from "lucide-react";
 import { useDemo } from "@/contexts/DemoContext";
@@ -124,11 +124,11 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <AppLayout>
+      <DashboardLayout>
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
-      </AppLayout>
+      </DashboardLayout>
     );
   }
 
@@ -171,7 +171,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <AppLayout>
+    <DashboardLayout>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl md:text-4xl font-bold">Dashboard</h1>
@@ -242,6 +242,6 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
-    </AppLayout>
+    </DashboardLayout>
   );
 }
