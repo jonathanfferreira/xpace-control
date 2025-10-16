@@ -51,9 +51,27 @@ export default function TeacherClasses() {
 
   const generateQRCode = async (classId: string) => {
     try {
+      // Get class schedule to determine time window
+      const { data: classData, error: classError } = await supabase
+        .from('classes')
+        .select('schedule_time')
+        .eq('id', classId)
+        .single();
+
+      if (classError) throw classError;
+
       const token = `${classId}-${Date.now()}`;
-      const validFrom = new Date();
-      const validUntil = new Date(validFrom.getTime() + 25 * 60 * 1000);
+      
+      // Parse schedule time (format: HH:MM)
+      const [hours, minutes] = classData.schedule_time.split(':').map(Number);
+      
+      // Create time window: 10 min before class start, 15 min after
+      const now = new Date();
+      const classStart = new Date(now);
+      classStart.setHours(hours, minutes, 0, 0);
+      
+      const validFrom = new Date(classStart.getTime() - 10 * 60 * 1000); // -10 min
+      const validUntil = new Date(classStart.getTime() + 15 * 60 * 1000); // +15 min
 
       const { error } = await supabase.from('qr_tokens').insert({
         token,
@@ -67,7 +85,7 @@ export default function TeacherClasses() {
       setQrToken(token);
       setSelectedClass(classId);
       setQrDialogOpen(true);
-      toast.success('QR Code gerado com sucesso');
+      toast.success('QR Code gerado com sucesso (válido por 25 minutos)');
     } catch (error: any) {
       toast.error('Erro ao gerar QR Code');
     }

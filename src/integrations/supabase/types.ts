@@ -48,29 +48,35 @@ export type Database = {
         Row: {
           attendance_date: string
           class_id: string
+          device_fingerprint: string | null
           id: string
           marked_at: string
           marked_by: string | null
           notes: string | null
           student_id: string
+          user_agent: string | null
         }
         Insert: {
           attendance_date?: string
           class_id: string
+          device_fingerprint?: string | null
           id?: string
           marked_at?: string
           marked_by?: string | null
           notes?: string | null
           student_id: string
+          user_agent?: string | null
         }
         Update: {
           attendance_date?: string
           class_id?: string
+          device_fingerprint?: string | null
           id?: string
           marked_at?: string
           marked_by?: string | null
           notes?: string | null
           student_id?: string
+          user_agent?: string | null
         }
         Relationships: [
           {
@@ -1107,6 +1113,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      teacher_has_student: {
+        Args: { _student_id: string; _teacher_id: string }
         Returns: boolean
       }
       user_has_student_in_class: {

@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 
 export default function QRCodeScanner() {
@@ -23,7 +23,8 @@ export default function QRCodeScanner() {
     setSuccess(false);
 
     try {
-      // Validate token
+      // Validate token and check time window
+      const now = new Date();
       const { data: qrData, error: qrError } = await supabase
         .from('qr_tokens')
         .select('*, classes(id, name, school_id)')
@@ -33,16 +34,22 @@ export default function QRCodeScanner() {
       if (qrError) throw qrError;
 
       if (!qrData) {
-        throw new Error('Token inválido');
+        toast.error('QR Code inválido');
+        return;
       }
 
-      // Check if token is still valid
-      const now = new Date();
+      // Check time window
       const validFrom = new Date(qrData.valid_from);
       const validUntil = new Date(qrData.valid_until);
 
-      if (now < validFrom || now > validUntil) {
-        throw new Error('Token expirado ou ainda não válido');
+      if (now < validFrom) {
+        toast.error('QR Code ainda não está válido. A presença pode ser marcada 10 minutos antes da aula.');
+        return;
+      }
+
+      if (now > validUntil) {
+        toast.error('QR Code expirado. A janela de presença é de 15 minutos após o início da aula.');
+        return;
       }
 
       // Get student linked to this user
@@ -55,27 +62,45 @@ export default function QRCodeScanner() {
       if (studentError) throw studentError;
 
       if (!studentData) {
-        throw new Error('Nenhum aluno vinculado a esta conta');
+        toast.error('Nenhum aluno vinculado a esta conta');
+        return;
       }
 
       // Check enrollment
       const { data: enrollmentData, error: enrollmentError } = await supabase
-        .from('enrollments')
+        .from('class_students')
         .select('id')
         .eq('student_id', studentData.id)
         .eq('class_id', qrData.class_id)
-        .eq('status', 'active')
         .maybeSingle();
 
       if (enrollmentError) throw enrollmentError;
 
       if (!enrollmentData) {
-        throw new Error('Você não está matriculado nesta turma');
+        toast.error('Você não está matriculado nesta turma');
+        return;
       }
 
-      // Mark attendance
+      // Check if already marked today
       const today = new Date().toISOString().split('T')[0];
-      
+      const { data: existingAttendance } = await supabase
+        .from('attendances')
+        .select('id')
+        .eq('student_id', studentData.id)
+        .eq('class_id', qrData.class_id)
+        .eq('attendance_date', today)
+        .maybeSingle();
+
+      if (existingAttendance) {
+        toast.error('Presença já marcada hoje');
+        return;
+      }
+
+      // Get user agent and create simple fingerprint
+      const userAgent = navigator.userAgent;
+      const deviceFingerprint = `${userAgent}-${studentData.id}`;
+
+      // Mark attendance with device tracking
       const { error: attendanceError } = await supabase
         .from('attendances')
         .insert({
@@ -83,29 +108,18 @@ export default function QRCodeScanner() {
           student_id: studentData.id,
           attendance_date: today,
           marked_by: user?.id,
+          user_agent: userAgent,
+          device_fingerprint: deviceFingerprint,
         });
 
-      if (attendanceError) {
-        if (attendanceError.code === '23505') {
-          throw new Error('Presença já registrada para hoje');
-        }
-        throw attendanceError;
-      }
+      if (attendanceError) throw attendanceError;
 
       setSuccess(true);
-      toast({
-        title: 'Presença registrada!',
-        description: `Presença marcada na turma ${qrData.classes?.name}`,
-      });
-
+      toast.success(`Presença marcada na turma ${qrData.classes?.name}`);
       setToken('');
     } catch (error: any) {
       console.error('Error scanning QR code:', error);
-      toast({
-        title: 'Erro ao marcar presença',
-        description: error.message || 'Não foi possível registrar a presença.',
-        variant: 'destructive',
-      });
+      toast.error(error.message || 'Não foi possível registrar a presença.');
     } finally {
       setLoading(false);
     }

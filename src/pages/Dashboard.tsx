@@ -10,6 +10,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { FrequencyHeatmap } from "@/components/dashboard/FrequencyHeatmap";
 import { TopClassesCard } from "@/components/dashboard/TopClassesCard";
 import { ChurnIndicatorCard } from "@/components/dashboard/ChurnIndicatorCard";
+import { WeeklyAttendanceCard } from "@/components/dashboard/WeeklyAttendanceCard";
 import { OnboardingChecklist } from "@/components/OnboardingChecklist";
 
 export default function Dashboard() {
@@ -303,6 +304,9 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Weekly Attendance Metrics */}
+        <WeeklyAttendanceCard />
 
         {/* BI Components */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
