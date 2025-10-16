@@ -325,7 +325,7 @@ export default function Payments() {
                       Nova Cobrança
                     </Button>
                   </DialogTrigger>
-                <DialogContent>
+                  <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Criar Nova Cobrança</DialogTitle>
                     <DialogDescription>
@@ -389,6 +389,7 @@ export default function Payments() {
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
