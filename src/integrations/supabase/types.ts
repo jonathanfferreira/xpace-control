@@ -1119,6 +1119,15 @@ export type Database = {
         Args: { _guardian_user_id: string; _student_id: string }
         Returns: boolean
       }
+      log_audit_event: {
+        Args: {
+          _action: string
+          _details?: Json
+          _record_id: string
+          _table_name: string
+        }
+        Returns: undefined
+      }
       teacher_has_student: {
         Args: { _student_id: string; _teacher_id: string }
         Returns: boolean
