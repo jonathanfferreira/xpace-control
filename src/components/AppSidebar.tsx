@@ -12,6 +12,9 @@ import {
   LogOut,
   Bell,
   Building2,
+  Music,
+  Shirt,
+  Sparkles,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -40,6 +43,10 @@ const adminItems = [
   { title: 'Leads', url: '/leads', icon: UserPlus },
   { title: 'Notificações', url: '/notificacoes', icon: Bell },
   { title: 'Unidades', url: '/unidades', icon: Building2 },
+  // Dança
+  { title: 'Estilos de Dança', url: '/estilos-danca', icon: Music },
+  { title: 'Coreografias', url: '/coreografias', icon: Sparkles },
+  { title: 'Figurinos', url: '/figurinos', icon: Shirt },
   { title: 'Configurações', url: '/configuracoes', icon: Settings },
 ];
 
