@@ -36,6 +36,8 @@ import ResetPassword from "./pages/ResetPassword";
 import Leads from "./pages/Leads";
 import DemoLogin from "./pages/DemoLogin";
 import DemoReset from "./pages/DemoReset";
+import DanceStyles from "./pages/DanceStyles";
+import Costumes from "./pages/Costumes";
 
 import TeacherClasses from "./pages/teacher/TeacherClasses";
 import TeacherAttendance from "./pages/teacher/TeacherAttendance";
@@ -192,6 +194,16 @@ const App = () => (
               <Route path="/unidades" element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <Units />
+                </ProtectedRoute>
+              } />
+              <Route path="/estilos-danca" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <DanceStyles />
+                </ProtectedRoute>
+              } />
+              <Route path="/figurinos" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <Costumes />
                 </ProtectedRoute>
               } />
 
