@@ -38,6 +38,15 @@ import DemoLogin from "./pages/DemoLogin";
 import DemoReset from "./pages/DemoReset";
 import DanceStyles from "./pages/DanceStyles";
 import Costumes from "./pages/Costumes";
+import Choreographies from "./pages/Choreographies";
+
+import CashRegister from "./pages/financial/CashRegister";
+import AccountsPayable from "./pages/financial/AccountsPayable";
+import AccountsReceivable from "./pages/financial/AccountsReceivable";
+import FinancialAccounts from "./pages/financial/FinancialAccounts";
+import Sales from "./pages/financial/Sales";
+import Commissions from "./pages/financial/Commissions";
+import FinancialDashboard from "./pages/financial/FinancialDashboard";
 
 import TeacherClasses from "./pages/teacher/TeacherClasses";
 import TeacherAttendance from "./pages/teacher/TeacherAttendance";
@@ -203,6 +212,48 @@ const App = () => (
               <Route path="/figurinos" element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <Costumes />
+                </ProtectedRoute>
+              } />
+              <Route path="/coreografias" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <Choreographies />
+                </ProtectedRoute>
+              } />
+
+              {/* Financial routes */}
+              <Route path="/financeiro/dashboard" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <FinancialDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/financeiro/caixa" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <CashRegister />
+                </ProtectedRoute>
+              } />
+              <Route path="/financeiro/contas-pagar" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AccountsPayable />
+                </ProtectedRoute>
+              } />
+              <Route path="/financeiro/contas-receber" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AccountsReceivable />
+                </ProtectedRoute>
+              } />
+              <Route path="/financeiro/contas-financeiras" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <FinancialAccounts />
+                </ProtectedRoute>
+              } />
+              <Route path="/financeiro/vendas" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <Sales />
+                </ProtectedRoute>
+              } />
+              <Route path="/financeiro/comissoes" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <Commissions />
                 </ProtectedRoute>
               } />
 

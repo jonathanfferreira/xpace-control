@@ -15,6 +15,13 @@ import {
   Music,
   Shirt,
   Sparkles,
+  DollarSign,
+  Wallet,
+  TrendingUp,
+  TrendingDown,
+  ShoppingCart,
+  Receipt,
+  Building,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -47,6 +54,14 @@ const adminItems = [
   { title: 'Estilos de Dança', url: '/estilos-danca', icon: Music },
   { title: 'Coreografias', url: '/coreografias', icon: Sparkles },
   { title: 'Figurinos', url: '/figurinos', icon: Shirt },
+  // Financeiro
+  { title: 'Dashboard Financeiro', url: '/financeiro/dashboard', icon: BarChart3 },
+  { title: 'Caixa', url: '/financeiro/caixa', icon: Wallet },
+  { title: 'Contas a Pagar', url: '/financeiro/contas-pagar', icon: TrendingDown },
+  { title: 'Contas a Receber', url: '/financeiro/contas-receber', icon: TrendingUp },
+  { title: 'Contas Financeiras', url: '/financeiro/contas-financeiras', icon: Building },
+  { title: 'Vendas', url: '/financeiro/vendas', icon: ShoppingCart },
+  { title: 'Comissões', url: '/financeiro/comissoes', icon: Receipt },
   { title: 'Configurações', url: '/configuracoes', icon: Settings },
 ];
 
