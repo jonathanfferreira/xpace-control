@@ -182,7 +182,8 @@ export default function AccountsPayable() {
   if (loading) return <div className="p-8">Carregando...</div>;
 
   return (
-    <div className="p-8 space-y-6">
+    <DashboardLayout>
+      <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Contas a Pagar</h1>
@@ -319,6 +320,7 @@ export default function AccountsPayable() {
         </CardContent>
       </Card>
     </div>
+    </DashboardLayout>
   );
 }
 

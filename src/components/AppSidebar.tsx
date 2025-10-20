@@ -22,6 +22,7 @@ import {
   ShoppingCart,
   Receipt,
   Building,
+  ChevronRight,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -32,14 +33,42 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarFooter,
   useSidebar,
 } from '@/components/ui/sidebar';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-// Logo is now loaded from /public
+import { useState } from 'react';
 
-const adminItems = [
+// Tipos de itens do menu
+interface MenuItem {
+  title: string;
+  url: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
+
+interface MenuGroup {
+  title: string;
+  icon: React.ComponentType<{ className?: string }>;
+  items: MenuItem[];
+}
+
+type MenuItemOrGroup = MenuItem | MenuGroup;
+
+// Função type guard para verificar se é um grupo
+function isMenuGroup(item: MenuItemOrGroup): item is MenuGroup {
+  return 'items' in item;
+}
+
+const adminItems: MenuItemOrGroup[] = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
   { title: 'Alunos', url: '/alunos', icon: Users },
   { title: 'Turmas', url: '/turmas', icon: GraduationCap },
@@ -50,35 +79,47 @@ const adminItems = [
   { title: 'Leads', url: '/leads', icon: UserPlus },
   { title: 'Notificações', url: '/notificacoes', icon: Bell },
   { title: 'Unidades', url: '/unidades', icon: Building2 },
-  // Dança
-  { title: 'Estilos de Dança', url: '/estilos-danca', icon: Music },
-  { title: 'Coreografias', url: '/coreografias', icon: Sparkles },
-  { title: 'Figurinos', url: '/figurinos', icon: Shirt },
-  // Financeiro
-  { title: 'Dashboard Financeiro', url: '/financeiro/dashboard', icon: BarChart3 },
-  { title: 'Caixa', url: '/financeiro/caixa', icon: Wallet },
-  { title: 'Contas a Pagar', url: '/financeiro/contas-pagar', icon: TrendingDown },
-  { title: 'Contas a Receber', url: '/financeiro/contas-receber', icon: TrendingUp },
-  { title: 'Contas Financeiras', url: '/financeiro/contas-financeiras', icon: Building },
-  { title: 'Vendas', url: '/financeiro/vendas', icon: ShoppingCart },
-  { title: 'Comissões', url: '/financeiro/comissoes', icon: Receipt },
+  // Grupo Dança
+  {
+    title: 'Dança',
+    icon: Music,
+    items: [
+      { title: 'Estilos de Dança', url: '/estilos-danca', icon: Music },
+      { title: 'Coreografias', url: '/coreografias', icon: Sparkles },
+      { title: 'Figurinos', url: '/figurinos', icon: Shirt },
+    ],
+  },
+  // Grupo Financeiro
+  {
+    title: 'Financeiro',
+    icon: DollarSign,
+    items: [
+      { title: 'Dashboard', url: '/financeiro/dashboard', icon: BarChart3 },
+      { title: 'Caixa', url: '/financeiro/caixa', icon: Wallet },
+      { title: 'Contas a Pagar', url: '/financeiro/contas-pagar', icon: TrendingDown },
+      { title: 'Contas a Receber', url: '/financeiro/contas-receber', icon: TrendingUp },
+      { title: 'Contas Financeiras', url: '/financeiro/contas-financeiras', icon: Building },
+      { title: 'Vendas', url: '/financeiro/vendas', icon: ShoppingCart },
+      { title: 'Comissões', url: '/financeiro/comissoes', icon: Receipt },
+    ],
+  },
   { title: 'Configurações', url: '/configuracoes', icon: Settings },
 ];
 
-const teacherItems = [
+const teacherItems: MenuItem[] = [
   { title: 'Minhas Turmas', url: '/professor/turmas', icon: GraduationCap },
   { title: 'Presenças', url: '/professor/presencas', icon: ClipboardCheck },
   { title: 'Agenda', url: '/professor/agenda', icon: Calendar },
 ];
 
-const guardianItems = [
+const guardianItems: MenuItem[] = [
   { title: 'Meus Alunos', url: '/responsavel/alunos', icon: Users },
   { title: 'Pagamentos', url: '/responsavel/pagamentos', icon: CreditCard },
   { title: 'Presenças', url: '/responsavel/presencas', icon: ClipboardCheck },
   { title: 'Eventos', url: '/responsavel/eventos', icon: Calendar },
 ];
 
-const studentItems = [
+const studentItems: MenuItem[] = [
   { title: 'Agenda', url: '/aluno/agenda', icon: Calendar },
   { title: 'Minhas Turmas', url: '/aluno/turmas', icon: GraduationCap },
   { title: 'Ler QR Code', url: '/aluno/qrcode', icon: ClipboardCheck },
@@ -88,8 +129,14 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const { role, signOut } = useAuth();
   const collapsed = state === 'collapsed';
+  
+  // Estados para controlar quais grupos estão abertos
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
+    'Dança': false,
+    'Financeiro': false,
+  });
 
-  const getItems = () => {
+  const getItems = (): MenuItemOrGroup[] => {
     switch (role) {
       case 'admin':
         return adminItems;
@@ -106,10 +153,17 @@ export function AppSidebar() {
 
   const items = getItems();
 
+  const toggleGroup = (groupTitle: string) => {
+    setOpenGroups(prev => ({
+      ...prev,
+      [groupTitle]: !prev[groupTitle],
+    }));
+  };
+
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
     isActive
-      ? 'bg-primary text-primary-foreground font-medium'
-      : 'hover:bg-muted';
+      ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
+      : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground';
 
   return (
     <Sidebar className={collapsed ? 'w-14' : 'w-64'} collapsible="icon">
@@ -128,16 +182,61 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.url}>
-                  <SidebarMenuButton asChild>
-                    <NavLink to={item.url} end className={getNavCls}>
-                      <item.icon className="h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {items.map((item) => {
+                // Se for um grupo com submenus
+                if (isMenuGroup(item)) {
+                  return (
+                    <Collapsible
+                      key={item.title}
+                      open={openGroups[item.title]}
+                      onOpenChange={() => toggleGroup(item.title)}
+                      className="group/collapsible"
+                    >
+                      <SidebarMenuItem>
+                        <CollapsibleTrigger asChild>
+                          <SidebarMenuButton className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+                            <item.icon className="h-4 w-4" />
+                            {!collapsed && <span>{item.title}</span>}
+                            {!collapsed && (
+                              <ChevronRight
+                                className={`ml-auto h-4 w-4 transition-transform ${
+                                  openGroups[item.title] ? 'rotate-90' : ''
+                                }`}
+                              />
+                            )}
+                          </SidebarMenuButton>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <SidebarMenuSub>
+                            {item.items.map((subItem) => (
+                              <SidebarMenuSubItem key={subItem.url}>
+                                <SidebarMenuSubButton asChild>
+                                  <NavLink to={subItem.url} className={getNavCls}>
+                                    <subItem.icon className="h-4 w-4" />
+                                    <span>{subItem.title}</span>
+                                  </NavLink>
+                                </SidebarMenuSubButton>
+                              </SidebarMenuSubItem>
+                            ))}
+                          </SidebarMenuSub>
+                        </CollapsibleContent>
+                      </SidebarMenuItem>
+                    </Collapsible>
+                  );
+                }
+
+                // Se for um item simples
+                return (
+                  <SidebarMenuItem key={item.url}>
+                    <SidebarMenuButton asChild>
+                      <NavLink to={item.url} className={getNavCls}>
+                        <item.icon className="h-4 w-4" />
+                        {!collapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -148,7 +247,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <Button
               variant="ghost"
-              className="w-full justify-start"
+              className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               onClick={signOut}
             >
               <LogOut className="h-4 w-4" />
@@ -160,3 +259,4 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+
