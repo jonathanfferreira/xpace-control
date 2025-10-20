@@ -48,7 +48,6 @@ import GuardianAttendance from "./pages/guardian/GuardianAttendance";
 import GuardianPayments from "./pages/guardian/GuardianPayments";
 
 import StudentSchedule from "./pages/student/StudentSchedule";
-import QRCodeScanner from "./pages/student/QRCodeScanner";
 
 const queryClient = new QueryClient();
 
@@ -264,11 +263,7 @@ const App = () => (
                   <StudentSchedule />
                 </ProtectedRoute>
               } />
-              <Route path="/aluno/qrcode" element={
-                <ProtectedRoute allowedRoles={['student']}>
-                  <QRCodeScanner />
-                </ProtectedRoute>
-              } />
+
 
               {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />
