@@ -6,8 +6,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Trophy, Calendar, DollarSign } from 'lucide-react';
+import { Calendar, DollarSign, Star, FileText } from 'lucide-react'; // <-- Ícone FileText importado
 import { useToast } from '@/hooks/use-toast';
+import { Link } from 'react-router-dom';
 
 interface Student {
   id: string;
@@ -16,15 +17,11 @@ interface Student {
   active: boolean;
 }
 
-interface StudentPoints {
-  total: number;
-  achievements: number;
-}
+// ... (restante do código permanece o mesmo até a renderização do card)
 
 export default function GuardianStudents() {
   const { user } = useAuth();
   const [students, setStudents] = useState<Student[]>([]);
-  const [points, setPoints] = useState<Record<string, StudentPoints>>({});
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -64,23 +61,6 @@ export default function GuardianStudents() {
       const studentsList = (await Promise.all(studentPromises)).filter(Boolean) as Student[];
       setStudents(studentsList);
 
-      for (const student of studentsList) {
-        const pointsQuery = query(collection(db, 'student_points'), where('student_id', '==', student.id));
-        const pointsSnapshot = await getDocs(pointsQuery);
-        const totalPoints = pointsSnapshot.docs.reduce((sum, doc) => sum + (doc.data().points || 0), 0);
-
-        const achievementsQuery = query(collection(db, 'student_achievements'), where('student_id', '==', student.id));
-        const achievementsSnapshot = await getDocs(achievementsQuery);
-        const totalAchievements = achievementsSnapshot.size;
-
-        setPoints(prev => ({
-          ...prev,
-          [student.id]: {
-            total: totalPoints,
-            achievements: totalAchievements
-          }
-        }));
-      }
     } catch (error) {
       console.error('Error fetching students:', error);
       toast({
@@ -108,7 +88,7 @@ export default function GuardianStudents() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Meus Alunos</h1>
-          <p className="text-muted-foreground">Acompanhe seus dependentes</p>
+          <p className="text-muted-foreground">Acompanhe o desenvolvimento e documentos de seus dependentes</p>
         </div>
 
         {students.length === 0 ? (
@@ -120,59 +100,59 @@ export default function GuardianStudents() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {students.map((student) => (
-              <Card key={student.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+              <Card key={student.id} className="overflow-hidden hover:shadow-lg transition-shadow flex flex-col">
                 <CardHeader className="pb-4">
                   <div className="flex items-center gap-4">
-                    <Avatar className="h-16 w-16">
+                    <Avatar className="h-16 w-16 border">
                       <AvatarImage src={student.photo_url} alt={student.full_name} />
                       <AvatarFallback className="text-lg">
                         {student.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                      <CardTitle className="text-lg">{student.full_name}</CardTitle>
+                      <CardTitle className="text-xl">{student.full_name}</CardTitle>
                       <Badge variant={student.active ? 'default' : 'secondary'} className="mt-1">
                         {student.active ? 'Ativo' : 'Inativo'}
                       </Badge>
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Trophy className="h-4 w-4" />
-                      <span>Pontos</span>
+                <CardContent className="flex-1 flex flex-col justify-end">
+                  <div className="pt-4 flex flex-col gap-2">
+                    <div className="flex gap-2">
+                        <Link 
+                          to={`/responsavel/avaliacoes/${student.id}`}
+                          className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                        >
+                          <Star className="h-4 w-4" />
+                          Avaliações
+                        </Link>
+                        <Link 
+                          to={`/responsavel/documentos/${student.id}`}
+                          className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                        >
+                          <FileText className="h-4 w-4" />
+                          Documentos
+                        </Link>
                     </div>
-                    <span className="font-semibold text-foreground">
-                      {points[student.id]?.total || 0}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Trophy className="h-4 w-4 text-yellow-500" />
-                      <span>Conquistas</span>
+                    <div className="flex gap-2">
+                        <Link 
+                          to={`/responsavel/presencas?student=${student.id}`}
+                          className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 transition-colors"
+                        >
+                          <Calendar className="h-4 w-4" />
+                          Frequência
+                        </Link>
+                        <Link 
+                          to={`/responsavel/pagamentos?student=${student.id}`}
+                          className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 transition-colors"
+                        >
+                          <DollarSign className="h-4 w-4" />
+                          Pagamentos
+                        </Link>
                     </div>
-                    <span className="font-semibold text-foreground">
-                      {points[student.id]?.achievements || 0}
-                    </span>
-                  </div>
-                  <div className="pt-2 flex gap-2">
-                    <a 
-                      href={`/guardian/attendance?student=${student.id}`}
-                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-                    >
-                      <Calendar className="h-4 w-4" />
-                      Frequência
-                    </a>
-                    <a 
-                      href={`/guardian/payments?student=${student.id}`}
-                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 transition-colors"
-                    >
-                      <DollarSign className="h-4 w-4" />
-                      Pagamentos
-                    </a>
                   </div>
                 </CardContent>
               </Card>

@@ -1,69 +1,83 @@
 
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner";
-import { useAuth } from "@/hooks/useAuth";
-import { signInWithGoogle } from "@/services/authService";
-import { FcGoogle } from "react-icons/fc";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Loader2, LogIn, UserPlus } from 'lucide-react';
+import { toast } from 'sonner';
 
-const AuthPage = () => {
+export default function AuthPage() {
+  const [isLogin, setIsLogin] = useState(true);
+  const { login, signup } = useAuth();
   const navigate = useNavigate();
-  const { user, loading } = useAuth();
 
-  useEffect(() => {
-    // If user is logged in, redirect to dashboard
-    if (!loading && user) {
-      navigate("/dashboard");
-    }
-  }, [user, loading, navigate]);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleGoogleSignIn = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
     try {
-      await signInWithGoogle();
-      toast.success("Login com Google realizado com sucesso!");
-      navigate("/dashboard");
-    } catch (error) {
-      toast.error("Falha no login com Google. Tente novamente.");
-      console.error(error);
+      if (isLogin) {
+        await login(email, password);
+        toast.success('Login realizado com sucesso!');
+        navigate('/dashboard');
+      } else {
+        await signup(email, password, fullName);
+        toast.success('Cadastro realizado com sucesso!', {
+          description: 'Vamos agora configurar sua escola.'
+        });
+        navigate('/onboarding'); // <<--- REDIRECIONAMENTO AQUI
+      }
+    } catch (error: any) {
+      toast.error('Falha na autenticação', {
+        description: error.message || 'Ocorreu um erro desconhecido.',
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (loading || user) {
-    // Show a loading state or nothing while redirecting
-    return (
-        <div className="min-h-screen flex items-center justify-center">
-            <p>Carregando...</p>
-        </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 gradient-xpace">
-      <Card className="w-full max-w-md animate-slide-up">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-             <div className="flex items-center gap-2">
-               <img src="/xpace-black.png" alt="XPACE OS" className="h-12 w-auto dark:hidden" />
-               <img src="/xpace-white.png" alt="XPACE OS" className="h-12 w-auto hidden dark:block" />
-             </div>
-           </div>
-          <CardTitle className="text-2xl">Bem-vindo ao XPACE OS</CardTitle>
-          <CardDescription>O sistema de gestão para escolas de dança.</CardDescription>
+    <div className="flex items-center justify-center min-h-screen bg-background">
+      <Card className="w-full max-w-sm mx-auto">
+        <CardHeader>
+          <CardTitle className="text-2xl">{isLogin ? 'Acessar Painel' : 'Criar Nova Conta'}</CardTitle>
+          <CardDescription>{isLogin ? 'Insira seus dados para continuar.' : 'Crie sua conta para gerenciar sua escola.'}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col items-center space-y-4">
-            <p className="text-sm text-muted-foreground">Comece fazendo login com sua conta Google.</p>
-            <Button onClick={handleGoogleSignIn} variant="outline" className="w-full">
-              <FcGoogle className="mr-2 h-5 w-5" />
-              Entrar com Google
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {!isLogin && (
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Nome Completo</Label>
+                <Input id="fullName" type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Senha</Label>
+              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            </div>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (isLogin ? <LogIn className="mr-2 h-4 w-4"/> : <UserPlus className="mr-2 h-4 w-4"/>)}
+              {isLogin ? 'Entrar' : 'Cadastrar'}
             </Button>
-          </div>
+          </form>
         </CardContent>
+        <CardFooter className="flex flex-col items-center justify-center">
+          <Button variant="link" onClick={() => setIsLogin(!isLogin)}>
+            {isLogin ? 'Não tem uma conta? Cadastre-se' : 'Já tem uma conta? Faça login'}
+          </Button>
+        </CardFooter>
       </Card>
     </div>
   );
-};
-
-export default AuthPage;
+}

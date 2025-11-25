@@ -23,6 +23,7 @@ import {
   Receipt,
   Building,
   ChevronRight,
+  ShoppingBag, // <-- Importado
 } from 'lucide-react';
 import {
   Sidebar,
@@ -75,18 +76,18 @@ const adminItems: MenuItemOrGroup[] = [
   { title: 'Presenças', url: '/presencas', icon: ClipboardCheck },
   { title: 'Pagamentos', url: '/pagamentos', icon: CreditCard },
   { title: 'Relatórios', url: '/relatorios', icon: BarChart3 },
-  { title: 'Eventos', url: '/eventos', icon: Calendar },
   { title: 'Leads', url: '/leads', icon: UserPlus },
   { title: 'Notificações', url: '/notificacoes', icon: Bell },
   { title: 'Unidades', url: '/unidades', icon: Building2 },
-  // Grupo Dança
+  // Grupo Artístico
   {
-    title: 'Dança',
+    title: 'Artístico',
     icon: Music,
     items: [
-      { title: 'Estilos de Dança', url: '/estilos-danca', icon: Music },
       { title: 'Coreografias', url: '/coreografias', icon: Sparkles },
       { title: 'Figurinos', url: '/figurinos', icon: Shirt },
+      { title: 'Eventos', url: '/eventos', icon: Calendar },
+      { title: 'Produtos', url: '/produtos', icon: ShoppingBag }, // <-- Adicionado
     ],
   },
   // Grupo Financeiro
@@ -132,7 +133,7 @@ export function AppSidebar() {
   
   // Estados para controlar quais grupos estão abertos
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
-    'Dança': false,
+    'Artístico': false,
     'Financeiro': false,
   });
 
@@ -259,4 +260,3 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
-

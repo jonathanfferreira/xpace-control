@@ -1,219 +1,236 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { db, functions } from "@/integrations/firebase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { httpsCallable } from "firebase/functions";
-import { collection, query, where, getDocs, addDoc, doc, getDoc, orderBy, Timestamp } from "firebase/firestore";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
-import { Calendar, QrCode, Download } from "lucide-react";
-import { useDemo } from "@/contexts/DemoContext";
 
-interface Attendance {
+import { useState, useEffect, useMemo } from 'react';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { db } from '@/integrations/firebase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { toast } from 'sonner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { DateRange } from 'react-day-picker';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { Loader2, CalendarIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+
+interface AttendanceRecord {
   id: string;
-  marked_at: Timestamp;
-  students?: { full_name: string };
-  classes?: { name: string };
+  studentName: string;
+  className: string;
+  teacherName: string;
+  status: 'present' | 'absent' | 'justified';
+  attendance_date: string;
 }
 
-export default function Attendance() {
-  const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
-  const { isDemoMode } = useDemo();
-  const [attendances, setAttendances] = useState<Attendance[]>([]);
+export default function AttendanceReport() {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [exporting, setExporting] = useState(false);
-  const [isQRDialogOpen, setIsQRDialogOpen] = useState(false);
-  const [qrInput, setQrInput] = useState("");
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
 
+  const [students, setStudents] = useState<any[]>([]);
+  const [classes, setClasses] = useState<any[]>([]);
+  const [teachers, setTeachers] = useState<any[]>([]);
+  const [attendances, setAttendances] = useState<AttendanceRecord[]>([]);
+
+  const [selectedClass, setSelectedClass] = useState<string>('all');
+  const [selectedStudent, setSelectedStudent] = useState<string>('all');
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+
+  const schoolId = useMemo(async () => {
+    if (!user) return null;
+    const schoolQuery = query(collection(db, 'schools'), where('admin_id', '==', user.uid));
+    const schoolSnapshot = await getDocs(schoolQuery);
+    return schoolSnapshot.empty ? null : schoolSnapshot.docs[0].id;
+  }, [user]);
+
+  // Fetch initial data for filters
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/auth");
-    }
-    if(user){
-      fetchAttendances();
-    }
-  }, [selectedDate, user, authLoading, navigate]);
+    const fetchFilterData = async () => {
+      const resolvedSchoolId = await schoolId;
+      if (!resolvedSchoolId) return;
+      try {
+        const [studentsSnap, classesSnap, usersSnap] = await Promise.all([
+          getDocs(query(collection(db, 'students'), where('school_id', '==', resolvedSchoolId))),
+          getDocs(query(collection(db, 'classes'), where('school_id', '==', resolvedSchoolId))),
+          getDocs(query(collection(db, 'users')))
+        ]);
+        setStudents(studentsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+        setClasses(classesSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+        setTeachers(usersSnap.docs.filter(d => d.data().role === 'teacher').map(d => ({ id: d.id, ...d.data() })));
+      } catch (error) {
+        toast.error("Erro ao carregar filtros");
+      }
+    };
+    fetchFilterData();
+  }, [schoolId]);
 
-
-  const fetchAttendances = async () => {
-    if (!user) return;
-    try {
+  // Fetch attendances based on filters
+  useEffect(() => {
+    const fetchAttendances = async () => {
       setLoading(true);
-      const attendanceQuery = query(
-        collection(db, "attendances"),
-        where("attendance_date", "==", selectedDate),
-        orderBy("marked_at", "desc")
-      );
-
-      const querySnapshot = await getDocs(attendanceQuery);
-      const attendanceData = await Promise.all(querySnapshot.docs.map(async (docSnap) => {
-        const attendance = docSnap.data();
-        let studentName = 'Aluno não encontrado';
-        let className = 'Turma não encontrada';
-
-        if (attendance.student_id) {
-          const studentDoc = await getDoc(doc(db, 'students', attendance.student_id));
-          if (studentDoc.exists()) studentName = studentDoc.data().full_name;
+      try {
+        let attendanceQuery = query(collection(db, 'attendances'), orderBy('attendance_date', 'desc'));
+        
+        if (selectedClass !== 'all') {
+          attendanceQuery = query(attendanceQuery, where('class_id', '==', selectedClass));
         }
-        if (attendance.class_id) {
-          const classDoc = await getDoc(doc(db, 'classes', attendance.class_id));
-          if (classDoc.exists()) className = classDoc.data().name;
+        if (selectedStudent !== 'all') {
+          attendanceQuery = query(attendanceQuery, where('student_id', '==', selectedStudent));
+        }
+        if (dateRange?.from) {
+            attendanceQuery = query(attendanceQuery, where('attendance_date', '>=', format(dateRange.from, 'yyyy-MM-dd')));
+        }
+        if (dateRange?.to) {
+            attendanceQuery = query(attendanceQuery, where('attendance_date', '<=', format(dateRange.to, 'yyyy-MM-dd')));
         }
         
-        return {
-          id: docSnap.id,
-          ...attendance,
-          students: { full_name: studentName },
-          classes: { name: className },
-        } as Attendance;
-      }));
+        const snapshot = await getDocs(attendanceQuery);
+        const studentMap = new Map(students.map(s => [s.id, s.full_name]));
+        const classMap = new Map(classes.map(c => [c.id, c.name]));
+        const teacherMap = new Map(teachers.map(t => [t.id, t.displayName]));
 
-      setAttendances(attendanceData);
-    } catch (error: any) {
-      console.error(error);
-      toast.error("Erro ao carregar presenças");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleMarkAttendance = async () => {
-    if (!user) return;
-    try {
-      const classesQuery = query(collection(db, "classes"), where("qr_code", "==", qrInput.trim()));
-      const classSnapshot = await getDocs(classesQuery);
-
-      if (classSnapshot.empty) {
-        toast.error("QR Code inválido");
-        return;
+        const records = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                studentName: studentMap.get(data.student_id) || 'Aluno não encontrado',
+                className: classMap.get(data.class_id) || 'Turma não encontrada',
+                teacherName: teacherMap.get(data.marked_by) || 'Professor não encontrado',
+                status: data.status,
+                attendance_date: data.attendance_date,
+            }
+        });
+        setAttendances(records);
+      } catch (error: any) {
+        console.error(error);
+        toast.error("Erro ao buscar presenças:", { description: error.message });
+      } finally {
+        setLoading(false);
       }
-      const classData = classSnapshot.docs[0];
+    };
 
-      // This logic is based on the original implementation, assuming a parent user is marking attendance.
-      const studentsQuery = query(collection(db, "students"), where("parent_id", "==", user.uid));
-      const studentSnapshot = await getDocs(studentsQuery);
-
-      if (studentSnapshot.empty) {
-        toast.error("Nenhum aluno vinculado a este usuário foi encontrado.");
-        return;
-      }
-      const studentData = studentSnapshot.docs[0]; // Taking the first student found
-
-      await addDoc(collection(db, "attendances"), {
-        class_id: classData.id,
-        student_id: studentData.id,
-        attendance_date: selectedDate,
-        marked_by: user.uid,
-        marked_at: new Date(),
-      });
-
-      toast.success("Presença marcada com sucesso!");
-      setIsQRDialogOpen(false);
-      setQrInput("");
-      fetchAttendances();
-    } catch (error: any) {
-      toast.error(error.message || "Erro ao marcar presença");
-    }
-  };
-
-  const handleExport = async () => {
-    if (isDemoMode) {
-      toast.success("Relatório exportado! (demo)");
-      return;
+    if (students.length > 0 && classes.length > 0) {
+        fetchAttendances();
     }
 
-    setExporting(true);
-    try {
-      const exportReportFunc = httpsCallable(functions, 'exportReport');
-      const result: any = await exportReportFunc({ reportType: 'attendances', filters: { date: selectedDate } });
-      
-      const blob = new Blob([result.data], { type: 'text/csv;charset=utf-8;' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `relatorio_presencas_${selectedDate}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+  }, [selectedClass, selectedStudent, dateRange, students, classes, teachers]);
 
-      toast.success("Relatório exportado com sucesso!");
-    } catch (error) {
-      console.error(error)
-      toast.error("Erro ao exportar relatório");
-    } finally {
-      setExporting(false);
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case 'present': return 'success';
+      case 'absent': return 'destructive';
+      case 'justified': return 'secondary';
+      default: return 'outline';
     }
-  };
-
-  if (loading || authLoading) {
-    return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>
-      </DashboardLayout>
-    );
+  }
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'present': return 'Presente';
+      case 'absent': return 'Ausente';
+      case 'justified': return 'Justificado';
+      default: return 'N/A';
+    }
   }
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold">Presenças</h1>
-            <p className="text-muted-foreground">Gerencie a presença dos alunos</p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleExport} disabled={exporting}><Download className="h-4 w-4 mr-2" />{exporting ? "Exportando..." : "Exportar CSV"}</Button>
-            <Button onClick={() => setIsQRDialogOpen(true)}><QrCode className="h-4 w-4 mr-2" />Marcar Presença</Button>
-          </div>
-        </div>
+        <h1 className="text-3xl font-bold">Relatório de Frequência</h1>
 
         <Card>
-          <CardHeader><CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5" />Selecionar Data</CardTitle></CardHeader>
-          <CardContent><Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="max-w-xs" /></CardContent>
-        </Card>
+          <CardHeader>
+            <CardTitle>Filtros</CardTitle>
+            <CardDescription>Filtre o relatório por turma, aluno ou período.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap items-center gap-4">
+            <Select value={selectedClass} onValueChange={setSelectedClass}>
+              <SelectTrigger className="w-[200px]"><SelectValue placeholder="Filtrar por turma..." /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as Turmas</SelectItem>
+                {classes.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
 
-        <Card>
-          <CardHeader><CardTitle>Presenças do Dia</CardTitle></CardHeader>
-          <CardContent>
-            {attendances.length > 0 ? (
-              <div className="space-y-3">
-                {attendances.map((attendance) => (
-                  <div key={attendance.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <p className="font-medium">{attendance.students?.full_name}</p>
-                      <p className="text-sm text-muted-foreground">{attendance.classes?.name}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground">
-                        {attendance.marked_at ? attendance.marked_at.toDate().toLocaleTimeString("pt-BR") : ''}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-center text-muted-foreground py-8">Nenhuma presença registrada nesta data</p>
-            )}
+            <Select value={selectedStudent} onValueChange={setSelectedStudent}>
+              <SelectTrigger className="w-[200px]"><SelectValue placeholder="Filtrar por aluno..." /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os Alunos</SelectItem>
+                {students.map(s => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+
+             <Popover>
+                <PopoverTrigger asChild>
+                <Button
+                    id="date"
+                    variant={"outline"}
+                    className="w-[300px] justify-start text-left font-normal"
+                >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateRange?.from ? (
+                    dateRange.to ? (
+                        <>{format(dateRange.from, "LLL dd, y")} - {format(dateRange.to, "LLL dd, y")}</>
+                    ) : (
+                        format(dateRange.from, "LLL dd, y")
+                    )
+                    ) : (
+                    <span>Escolha um período</span>
+                    )}
+                </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                    initialFocus
+                    mode="range"
+                    defaultMonth={dateRange?.from}
+                    selected={dateRange}
+                    onSelect={setDateRange}
+                    numberOfMonths={2}
+                    locale={ptBR}
+                />
+                </PopoverContent>
+            </Popover>
           </CardContent>
         </Card>
 
-        <Dialog open={isQRDialogOpen} onOpenChange={setIsQRDialogOpen}>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Marcar Presença via QR Code</DialogTitle></DialogHeader>
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">Digite ou escaneie o código QR da turma</p>
-              <Input value={qrInput} onChange={(e) => setQrInput(e.target.value)} placeholder="Cole o código aqui" />
-              <Button onClick={handleMarkAttendance} className="w-full">Confirmar Presença</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <Card>
+          <CardHeader>
+            <CardTitle>Resultados</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Aluno</TableHead>
+                  <TableHead>Turma</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Marcado por</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow><TableCell colSpan={5} className="text-center"><Loader2 className="mx-auto my-4 h-8 w-8 animate-spin" /></TableCell></TableRow>
+                ) : attendances.length > 0 ? (
+                  attendances.map((att) => (
+                    <TableRow key={att.id}>
+                      <TableCell>{format(new Date(att.attendance_date), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
+                      <TableCell className="font-medium">{att.studentName}</TableCell>
+                      <TableCell>{att.className}</TableCell>
+                      <TableCell><Badge variant={getStatusVariant(att.status)}>{getStatusLabel(att.status)}</Badge></TableCell>
+                      <TableCell>{att.teacherName}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow><TableCell colSpan={5} className="text-center py-8">Nenhum registro encontrado para os filtros selecionados.</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );

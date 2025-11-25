@@ -1,10 +1,10 @@
 
 import { useState } from "react";
-import { getFunctions, httpsCallable } from "firebase/functions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Wand2, Copy } from "lucide-react";
+import { Wand2, Copy, Loader2 } from "lucide-react";
+import { geminiMock } from "@/services/geminiMock"; // Importando o nosso mock
 
 interface DebtDetails {
   studentName: string;
@@ -13,7 +13,7 @@ interface DebtDetails {
 }
 
 interface EmpatheticCollectorProps {
-  debtInfo: DebtDetails;
+  debtInfo: DebtDetails | null;
 }
 
 interface GeneratedMessages {
@@ -27,20 +27,22 @@ export const EmpatheticCollector = ({ debtInfo }: EmpatheticCollectorProps) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleGenerateMessages = async () => {
+    if (!debtInfo) {
+        toast.warning("Não há informações de débito para gerar a mensagem.");
+        return;
+    }
+
     setIsLoading(true);
     setMessages(null);
-    const functions = getFunctions();
-    // Apontando para a função que vamos criar no backend
-    const generateMessagesFn = httpsCallable(functions, "generateBillingMessages");
-
+    
     try {
-      const result = await generateMessagesFn(debtInfo);
-      const data = result.data as GeneratedMessages;
+      // Usando o MOCK em vez da chamada real da Firebase Function
+      const data = await geminiMock.generateBillingMessages(debtInfo);
       setMessages(data);
       toast.success("Mensagens geradas com sucesso!");
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error("Falha ao gerar mensagens.", { description: error.message });
+      toast.error("Falha ao gerar mensagens (mock).", { description: error.message });
     } finally {
       setIsLoading(false);
     }
@@ -56,13 +58,16 @@ export const EmpatheticCollector = ({ debtInfo }: EmpatheticCollectorProps) => {
       <CardHeader>
         <CardTitle className="flex items-center"><Wand2 className="mr-2 text-primary" /> Cobrador Empático</CardTitle>
         <CardDescription>
-          Use IA para gerar mensagens de cobrança personalizadas. Clique no botão e veja a mágica acontecer.
+          {debtInfo ? 
+            "Use IA para gerar mensagens de cobrança baseadas no débito atual. Clique no botão e veja a mágica acontecer."
+            : "O aluno não possui débitos pendentes."
+          }
         </CardDescription>
       </CardHeader>
       <CardContent>
         {!messages && (
-          <Button onClick={handleGenerateMessages} disabled={isLoading}>
-            {isLoading ? "Gerando..." : "Gerar 3 opções de mensagem"}
+          <Button onClick={handleGenerateMessages} disabled={isLoading || !debtInfo}>
+            {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Gerando...</> : "Gerar 3 opções de mensagem"}
           </Button>
         )}
 

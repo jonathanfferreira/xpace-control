@@ -1,125 +1,143 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { db } from "@/integrations/firebase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "sonner";
-import { doc, getDoc, updateDoc, query, where, collection, getDocs } from "firebase/firestore";
 
-export default function Settings() {
-  const navigate = useNavigate();
+import { useState, useEffect, useMemo } from 'react';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useAuth } from '@/hooks/useAuth';
+import { db, storage } from '@/integrations/firebase/client';
+import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { toast } from 'sonner';
+import { Loader2, Upload, Palette } from 'lucide-react';
+
+export default function SettingsPage() {
   const { user } = useAuth();
+  const [school, setSchool] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [schoolId, setSchoolId] = useState<string | null>(null);
-  const [schoolForm, setSchoolForm] = useState({
-    name: "",
-    primary_color: "#6324b2",
-    payment_provider: "MOCK" as "MOCK" | "ASAAS_SANDBOX",
-  });
-  const [profileForm, setProfileForm] = useState({
-    full_name: "",
-    phone: "",
-  });
+  const [isSaving, setIsSaving] = useState(false);
+  
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [primaryColor, setPrimaryColor] = useState('#000000');
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+
+  const schoolId = useMemo(async () => {
+    if (!user) return null;
+    const schoolQuery = query(collection(db, 'schools'), where('admin_id', '==', user.uid));
+    const schoolSnapshot = await getDocs(schoolQuery);
+    return schoolSnapshot.empty ? null : schoolSnapshot.docs[0].id;
+  }, [user]);
 
   useEffect(() => {
+    const fetchSchoolData = async () => {
+      const resolvedSchoolId = await schoolId;
+      if (!resolvedSchoolId) {
+        setLoading(false);
+        return;
+      }
+      try {
+        const schoolRef = doc(db, 'schools', resolvedSchoolId);
+        const schoolSnap = await getDoc(schoolRef);
+        if (schoolSnap.exists()) {
+          const schoolData = schoolSnap.data();
+          setSchool(schoolData);
+          setPrimaryColor(schoolData.primaryColor || '#000000');
+          setLogoPreview(schoolData.logoUrl || null);
+        }
+      } catch (error: any) {
+        toast.error('Erro ao carregar configurações da escola.', { description: error.message });
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (user) {
-      fetchData();
-    } else {
-      navigate("/auth");
+      fetchSchoolData();
     }
-  }, [user, navigate]);
+  }, [user, schoolId]);
 
-  const fetchData = async () => {
-    if (!user) return;
-    setLoading(true);
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setLogoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSave = async () => {
+    const resolvedSchoolId = await schoolId;
+    if (!resolvedSchoolId) {
+      toast.error('ID da escola não encontrado.');
+      return;
+    }
+    setIsSaving(true);
     try {
-      const profileDocRef = doc(db, "profiles", user.uid);
-      const profileDoc = await getDoc(profileDocRef);
-      if (profileDoc.exists()) {
-        const data = profileDoc.data();
-        setProfileForm({ full_name: data.full_name || "", phone: data.phone || "" });
+      let logoUrl = school.logoUrl;
+      if (logoFile) {
+        const logoRef = ref(storage, `schools/${resolvedSchoolId}/logo/${logoFile.name}`);
+        const snapshot = await uploadBytes(logoRef, logoFile);
+        logoUrl = await getDownloadURL(snapshot.ref);
       }
 
-      const schoolQuery = query(collection(db, "schools"), where("admin_id", "==", user.uid));
-      const schoolSnapshot = await getDocs(schoolQuery);
-      if (!schoolSnapshot.empty) {
-        const schoolData = schoolSnapshot.docs[0].data();
-        const schoolId = schoolSnapshot.docs[0].id;
-        setSchoolId(schoolId);
-        setSchoolForm({
-          name: schoolData.name || "",
-          primary_color: schoolData.primary_color || "#6324b2",
-          payment_provider: schoolData.payment_provider || "MOCK",
-        });
-      } else {
-        navigate("/onboarding");
-      }
+      const schoolRef = doc(db, 'schools', resolvedSchoolId);
+      await updateDoc(schoolRef, {
+        logoUrl: logoUrl,
+        primaryColor: primaryColor,
+      });
+
+      toast.success('Configurações salvas com sucesso!');
     } catch (error: any) {
-      toast.error("Erro ao carregar dados: " + error.message);
+      toast.error('Erro ao salvar as configurações.', { description: error.message });
     } finally {
-      setLoading(false);
+      setIsSaving(false);
     }
   };
-
-  const handleUpdateSchool = async () => {
-    if (!schoolId) return;
-    try {
-      await updateDoc(doc(db, "schools", schoolId), schoolForm);
-      toast.success("Escola atualizada com sucesso!");
-    } catch (error: any) {
-      toast.error("Erro ao atualizar escola: " + error.message);
-    }
-  };
-
-  const handleUpdateProfile = async () => {
-    if (!user) return;
-    try {
-      await updateDoc(doc(db, "profiles", user.uid), profileForm);
-      toast.success("Perfil atualizado com sucesso!");
-    } catch (error: any) {
-      toast.error("Erro ao atualizar perfil: " + error.message);
-    }
-  };
-
-  if (loading) {
-    return <div>Carregando...</div>;
-  }
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Perfil</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Input value={profileForm.full_name} onChange={e => setProfileForm({...profileForm, full_name: e.target.value})} placeholder="Nome Completo" />
-            <Input value={profileForm.phone} onChange={e => setProfileForm({...profileForm, phone: e.target.value})} placeholder="Telefone" />
-            <Button onClick={handleUpdateProfile}>Salvar Perfil</Button>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Escola</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Input value={schoolForm.name} onChange={e => setSchoolForm({...schoolForm, name: e.target.value})} placeholder="Nome da Escola" />
-            <Input type="color" value={schoolForm.primary_color} onChange={e => setSchoolForm({...schoolForm, primary_color: e.target.value})} />
-            <Select value={schoolForm.payment_provider} onValueChange={(v: "MOCK" | "ASAAS_SANDBOX") => setSchoolForm({...schoolForm, payment_provider: v})}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="MOCK">MOCK</SelectItem>
-                <SelectItem value="ASAAS_SANDBOX">ASAAS Sandbox</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button onClick={handleUpdateSchool}>Salvar Configurações da Escola</Button>
-          </CardContent>
-        </Card>
+        <h1 className="text-3xl font-bold">Configurações</h1>
+        {loading ? (
+          <Loader2 className="h-8 w-8 animate-spin" />
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Personalização da Escola</CardTitle>
+              <CardDescription>Faça o upload do seu logo e escolha a cor primária para personalizar a aparência do sistema.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label>Logo da Escola</Label>
+                <div className="flex items-center gap-4">
+                  {logoPreview && <img src={logoPreview} alt="Pré-visualização do Logo" className="h-16 w-16 object-contain rounded-md border p-1" />}
+                  <Input type="file" accept="image/*" onChange={handleLogoChange} className="max-w-xs" />
+                </div>
+                <p className="text-xs text-muted-foreground">Recomendado: Imagem PNG com fundo transparente.</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor='primary-color'>Cor Primária</Label>
+                <div className="flex items-center gap-2">
+                    <div className='p-2 border rounded-md bg-background'>
+                        <input id='primary-color' type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="w-8 h-8" />
+                    </div>
+                    <Input value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="w-32" />
+                </div>
+              </div>
+              
+            </CardContent>
+            <CardFooter className="border-t px-6 py-4">
+                <Button onClick={handleSave} disabled={isSaving}>
+                    {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Salvar Alterações
+                </Button>
+            </CardFooter>
+          </Card>
+        )}
       </div>
     </DashboardLayout>
   );

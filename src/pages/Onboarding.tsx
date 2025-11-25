@@ -1,146 +1,102 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db } from '@/integrations/firebase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { db } from '@/integrations/firebase/client';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Loader2, School, Building2, Users, GraduationCap, Mail, Check } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import Papa from 'papaparse';
-import { collection, addDoc, doc, setDoc } from 'firebase/firestore';
+import { Loader2, ArrowRight, Building, User, Mail, ShieldCheck } from 'lucide-react';
 
-interface OnboardingStep {
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-}
-
-const steps: OnboardingStep[] = [
-  { title: 'Dados da Escola', description: 'Informações básicas da sua escola', icon: <School className="h-6 w-6" /> },
-  { title: 'Unidades', description: 'Configure as unidades da escola', icon: <Building2 className="h-6 w-6" /> },
-  { title: 'Importar Alunos', description: 'Importe seus alunos via CSV', icon: <Users className="h-6 w-6" /> },
-  { title: 'Criar Turmas', description: 'Configure suas turmas', icon: <GraduationCap className="h-6 w-6" /> },
-  { title: 'Convidar Professores', description: 'Convide professores para o sistema', icon: <Mail className="h-6 w-6" /> },
-];
-
-export default function Onboarding() {
-  const navigate = useNavigate();
+const OnboardingPage = () => {
   const { user } = useAuth();
-  const [currentStep, setCurrentStep] = useState(0);
+  const navigate = useNavigate();
+  const [step, setStep] = useState(1);
+  const [schoolName, setSchoolName] = useState('');
   const [loading, setLoading] = useState(false);
-  const [schoolId, setSchoolId] = useState<string>('');
-  const [unitId, setUnitId] = useState<string>('');
 
-  // Form states
-  const [schoolData, setSchoolData] = useState({ name: '', contact_email: '', contact_phone: '', city: '' });
-  const [unitData, setUnitData] = useState({ name: '', address: '', city: '', phone: '' });
-  const [csvFile, setCsvFile] = useState<File | null>(null);
-  const [importedStudents, setImportedStudents] = useState<any[]>([]);
-  const [classData, setClassData] = useState({ name: '', schedule_day: 'Monday', schedule_time: '18:00', max_students: 30 });
-  const [createdClasses, setCreatedClasses] = useState<string[]>([]);
-  const [teacherEmail, setTeacherEmail] = useState('');
-  const [invitedTeachers, setInvitedTeachers] = useState<string[]>([]);
-
-  const progress = ((currentStep + 1) / steps.length) * 100;
-
-  const handleSchoolSubmit = async () => {
-    if (!schoolData.name || !schoolData.contact_email) {
-      toast.error('Preencha todos os campos obrigatórios');
+  const handleCreateSchool = async () => {
+    if (!user) {
+      toast.error('Você precisa estar autenticado para criar uma escola.');
+      return;
+    }
+    if (schoolName.trim().length < 3) {
+      toast.warning('O nome da escola deve ter pelo menos 3 caracteres.');
       return;
     }
     setLoading(true);
     try {
-      if (!user) throw new Error("User not authenticated");
-      const schoolDocRef = await addDoc(collection(db, 'schools'), { ...schoolData, admin_id: user.uid });
-      setSchoolId(schoolDocRef.id);
-      // Assuming a `subscriptions` collection
-      await setDoc(doc(db, 'subscriptions', schoolDocRef.id), { status: 'trial', created_at: new Date() });
-      toast.success('Escola criada com sucesso!');
-      setCurrentStep(1);
-    } catch (error: any) {
-      toast.error(error.message || 'Erro ao criar escola');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleUnitSubmit = async () => {
-    if (!unitData.name) {
-      toast.error('Nome da unidade é obrigatório');
-      return;
-    }
-    setLoading(true);
-    try {
-      const unitDocRef = await addDoc(collection(db, 'school_units'), { ...unitData, school_id: schoolId });
-      setUnitId(unitDocRef.id);
-      toast.success('Unidade criada com sucesso!');
-      setCurrentStep(2);
-    } catch (error: any) {
-      toast.error(error.message || 'Erro ao criar unidade');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleImportStudents = async () => {
-    if (importedStudents.length === 0) {
-        toast.info("Nenhum aluno para importar, pulando etapa.");
-        setCurrentStep(3);
+      // 1. Verifica se o usuário já tem uma escola
+      const schoolQuery = query(collection(db, 'schools'), where('admin_id', '==', user.uid));
+      const existingSchools = await getDocs(schoolQuery);
+      if (!existingSchools.empty) {
+        toast.info('Você já possui uma escola configurada.');
+        navigate('/dashboard');
         return;
-    }
-    setLoading(true);
-    try {
-      const studentPromises = importedStudents.map(student => 
-        addDoc(collection(db, 'students'), {
-          full_name: student.nome || student.name,
-          email: student.email,
-          phone: student.telefone || student.phone,
-          birth_date: student.data_nascimento || student.birth_date,
-          school_id: schoolId,
-          unit_id: unitId
-        })
-      );
-      await Promise.all(studentPromises);
-      toast.success(`${importedStudents.length} alunos importados!`);
-      setCurrentStep(3);
+      }
+
+      // 2. Cria a nova escola
+      const schoolRef = await addDoc(collection(db, 'schools'), {
+        name: schoolName,
+        admin_id: user.uid,
+        createdAt: serverTimestamp(),
+        status: 'active',
+      });
+
+      // 3. Atualiza a role do usuário para 'admin'
+      const userRef = doc(db, 'users', user.uid);
+      await updateDoc(userRef, { role: 'admin' });
+      
+      toast.success(`Escola "${schoolName}" criada com sucesso!`);
+      navigate('/dashboard'); // Redireciona para o painel principal
+
     } catch (error: any) {
-      toast.error(error.message || 'Erro ao importar alunos');
+      console.error('Erro no onboarding:', error);
+      toast.error('Ocorreu um erro ao criar sua escola.', { description: error.message });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleClassSubmit = async () => {
-    if (!classData.name) {
-      toast.error('Nome da turma é obrigatório');
-      return;
-    }
-    setLoading(true);
-    try {
-        await addDoc(collection(db, 'classes'), {
-            ...classData,
-            school_id: schoolId,
-            unit_id: unitId,
-        });
-        setCreatedClasses([...createdClasses, classData.name]);
-        setClassData({ name: '', schedule_day: 'Monday', schedule_time: '18:00', max_students: 30 });
-        toast.success('Turma criada!');
-    } catch (error: any) {
-        toast.error(error.message || 'Erro ao criar turma');
-    } finally {
-        setLoading(false);
-    }
-  };
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-2xl">Bem-vindo ao XPACE OS!</CardTitle>
+          <CardDescription>Vamos configurar sua escola em alguns passos rápidos.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {step === 1 && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label htmlFor="schoolName" className="font-medium flex items-center">
+                  <Building className="mr-2 h-5 w-5 text-primary" />
+                  Qual é o nome da sua escola ou estúdio?
+                </label>
+                <Input 
+                  id="schoolName" 
+                  value={schoolName} 
+                  onChange={(e) => setSchoolName(e.target.value)} 
+                  placeholder="Ex: Escola de Dança Bailarte"
+                  autoFocus
+                />
+                <p className='text-xs text-muted-foreground'>Este será o nome exibido em todo o sistema.</p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+        <CardFooter>
+          <Button onClick={handleCreateSchool} disabled={loading} className="w-full">
+            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />} 
+            Criar Minha Escola e Acessar o Painel
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
+  );
+};
 
-  // ... Other handlers ...
-  const handleFinish = () => {
-    toast.success('Onboarding concluído! Bem-vindo ao Xpace Control! 🎉');
-    navigate('/dashboard');
-  };
-  
-  // The render logic remains largely the same, just ensure to call the firebase handlers
-  return (<div>Onboarding...</div>) // Placeholder for actual UI
-}
+export default OnboardingPage;
