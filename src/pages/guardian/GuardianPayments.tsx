@@ -1,7 +1,8 @@
 import { GuardianLayout } from '@/components/layout/GuardianLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/integrations/firebase/client';
+import { collection, query, where, getDocs, doc, getDoc, orderBy } from 'firebase/firestore';
 import { DollarSign, CheckCircle2, Clock, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -36,22 +37,20 @@ export default function GuardianPayments() {
       if (!studentId) return;
 
       // Buscar nome do aluno
-      const { data: studentData } = await supabase
-        .from('students')
-        .select('full_name')
-        .eq('id', studentId)
-        .single();
+      const studentDocRef = doc(db, "students", studentId);
+      const studentDocSnap = await getDoc(studentDocRef);
 
-      if (studentData) setStudentName(studentData.full_name);
+      if (studentDocSnap.exists()) {
+        setStudentName(studentDocSnap.data().full_name);
+      }
 
       // Buscar pagamentos
-      const { data, error } = await supabase
-        .from('payments')
-        .select('*')
-        .eq('student_id', studentId)
-        .order('due_date', { ascending: false });
-
-      if (error) throw error;
+      const paymentsCollectionRef = collection(db, "payments");
+      const q = query(paymentsCollectionRef, where("student_id", "==", studentId), orderBy("due_date", "desc"));
+      
+      const querySnapshot = await getDocs(q);
+      
+      const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Payment));
       setPayments(data || []);
     } catch (error) {
       console.error('Error fetching payments:', error);

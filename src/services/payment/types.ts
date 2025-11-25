@@ -1,34 +1,12 @@
-export type PaymentProvider = 'MOCK' | 'ASAAS_SANDBOX';
 
-export interface PaymentCharge {
-  id: string;
-  customer: string;
-  value: number;
-  dueDate: string;
-  description?: string;
-  externalReference?: string;
-}
+import { UserProfile } from "@/integrations/firebase/types";
 
-export interface PaymentStatus {
-  id: string;
-  status: 'pending' | 'paid' | 'overdue' | 'cancelled';
-  paidDate?: string;
-  paymentMethod?: string;
-}
-
-export interface IPaymentProvider {
-  criarCobranca(
-    studentId: string,
-    valor: number,
-    vencimento: string,
-    descricao?: string
-  ): Promise<PaymentCharge>;
-  
-  obterStatus(referencia: string): Promise<PaymentStatus>;
-  
-  marcarPago(
-    referencia: string,
-    dataPagamento: string,
-    metodoPagamento: string
-  ): Promise<void>;
+/**
+ * Interface for a generic payment provider.
+ * This allows us to swap payment gateways (e.g., Asaas, Stripe) in the future
+ * without changing the core application logic.
+ */
+export interface PaymentProvider {
+  createCustomer: (user: UserProfile) => Promise<{ customerId: string }>;
+  createPayment: (customerId: string, amount: number) => Promise<{ paymentId: string; invoiceUrl: string; status: string }>;
 }
