@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { supabase } from "@/integrations/supabase/client";
+import { db } from "@/integrations/firebase/client";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Phone } from "lucide-react";
@@ -31,15 +32,14 @@ export function LeadForm() {
     try {
       const validated = leadSchema.parse(formData);
 
-      const { error } = await supabase.from("leads").insert({
+      await addDoc(collection(db, "leads"), {
         school_name: validated.schoolName,
         city: validated.city,
         whatsapp: validated.whatsapp,
         email: validated.email,
         status: "new",
+        created_at: serverTimestamp(),
       });
-
-      if (error) throw error;
 
       toast.success("Mensagem enviada com sucesso! Em breve entraremos em contato.");
       setFormData({
@@ -52,6 +52,7 @@ export function LeadForm() {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
       } else {
+        console.error("Error submitting lead: ", error);
         toast.error("Erro ao enviar mensagem. Tente novamente.");
       }
     } finally {

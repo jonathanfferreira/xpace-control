@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/integrations/firebase/client';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Unit {
   id: string;
@@ -18,47 +20,53 @@ interface UnitContextType {
 const UnitContext = createContext<UnitContextType | undefined>(undefined);
 
 export function UnitProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
   const [units, setUnits] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadUnits = async () => {
+    if (!user) {
+        setLoading(false);
+        return;
+    }
+    setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const schoolsQuery = query(collection(db, 'schools'), where('admin_id', '==', user.uid));
+      const schoolSnapshot = await getDocs(schoolsQuery);
 
-      // Get school
-      const { data: school } = await supabase
-        .from('schools')
-        .select('id')
-        .eq('admin_id', user.id)
-        .single();
+      if (schoolSnapshot.empty) {
+        setUnits([]);
+        setSelectedUnit(null);
+        setLoading(false);
+        return;
+      }
+      const school = schoolSnapshot.docs[0];
+      const schoolId = school.id;
 
-      if (!school) return;
+      const unitsQuery = query(
+        collection(db, 'school_units'),
+        where('school_id', '==', schoolId),
+        where('active', '==', true)
+      );
+      const unitsSnapshot = await getDocs(unitsQuery);
+      const unitsData = unitsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Unit[];
+      
+      setUnits(unitsData);
 
-      // Load units
-      const { data: unitsData } = await supabase
-        .from('school_units')
-        .select('*')
-        .eq('school_id', school.id)
-        .eq('active', true)
-        .order('name');
-
-      if (unitsData) {
-        setUnits(unitsData);
-        
-        // Auto-select first unit or restore from localStorage
+      if (unitsData.length > 0) {
         const savedUnitId = localStorage.getItem('selectedUnitId');
-        if (savedUnitId) {
-          const savedUnit = unitsData.find(u => u.id === savedUnitId);
-          if (savedUnit) {
-            setSelectedUnit(savedUnit);
-          } else if (unitsData.length > 0) {
-            setSelectedUnit(unitsData[0]);
-          }
-        } else if (unitsData.length > 0) {
-          setSelectedUnit(unitsData[0]);
+        const savedUnit = unitsData.find(u => u.id === savedUnitId);
+        if (savedUnit) {
+          setSelectedUnit(savedUnit);
+        } else {
+          const firstUnit = unitsData[0];
+          setSelectedUnit(firstUnit);
+          localStorage.setItem('selectedUnitId', firstUnit.id);
         }
+      } else {
+        setSelectedUnit(null);
+        localStorage.removeItem('selectedUnitId');
       }
     } catch (error) {
       console.error('Error loading units:', error);
@@ -77,8 +85,10 @@ export function UnitProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    loadUnits();
-  }, []);
+    if(user) {
+        loadUnits();
+    }
+  }, [user]);
 
   return (
     <UnitContext.Provider value={{ selectedUnit, units, selectUnit, loadUnits, loading }}>

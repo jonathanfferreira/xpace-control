@@ -6,7 +6,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Building2, Plus, Edit, Trash2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { db } from "@/integrations/firebase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
@@ -21,6 +23,7 @@ interface Unit {
 
 export default function Units() {
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const [units, setUnits] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -33,42 +36,32 @@ export default function Units() {
   });
 
   useEffect(() => {
-    checkAuth();
-    fetchUnits();
-  }, []);
-
-  const checkAuth = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    if (!authLoading && !user) {
       navigate("/auth");
     }
-  };
+    if (user) {
+      fetchUnits();
+    }
+  }, [user, authLoading, navigate]);
 
   const fetchUnits = async () => {
+    if (!user) return;
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      setLoading(true);
+      const schoolsQuery = query(collection(db, "schools"), where("admin_id", "==", user.uid));
+      const schoolSnapshot = await getDocs(schoolsQuery);
 
-      const { data: schoolData } = await supabase
-        .from("schools")
-        .select("id")
-        .eq("admin_id", user.id)
-        .single();
-
-      if (!schoolData) {
+      if (schoolSnapshot.empty) {
         toast.error("Escola não encontrada");
-        setLoading(false);
+        setUnits([]);
         return;
       }
+      const schoolId = schoolSnapshot.docs[0].id;
 
-      const { data, error } = await supabase
-        .from("school_units")
-        .select("*")
-        .eq("school_id", schoolData.id)
-        .order("name");
-
-      if (error) throw error;
-      setUnits(data || []);
+      const unitsQuery = query(collection(db, "school_units"), where("school_id", "==", schoolId));
+      const unitsSnapshot = await getDocs(unitsQuery);
+      const unitsData = unitsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Unit[];
+      setUnits(unitsData);
     } catch (error: any) {
       toast.error("Erro ao carregar unidades");
     } finally {
@@ -76,42 +69,30 @@ export default function Units() {
     }
   };
 
+  const getSchoolId = async (): Promise<string | null> => {
+    if (!user) return null;
+    const schoolsQuery = query(collection(db, "schools"), where("admin_id", "==", user.uid));
+    const schoolSnapshot = await getDocs(schoolsQuery);
+    if (schoolSnapshot.empty) {
+      toast.error("Escola não encontrada");
+      return null;
+    }
+    return schoolSnapshot.docs[0].id;
+  };
+
   const handleSubmit = async () => {
+    const schoolId = await getSchoolId();
+    if (!schoolId) return;
+
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: schoolData } = await supabase
-        .from("schools")
-        .select("id")
-        .eq("admin_id", user.id)
-        .single();
-
-      if (!schoolData) {
-        toast.error("Escola não encontrada");
-        return;
-      }
-
       if (editingUnit) {
-        const { error } = await supabase
-          .from("school_units")
-          .update(formData)
-          .eq("id", editingUnit.id);
-
-        if (error) throw error;
+        const unitDocRef = doc(db, "school_units", editingUnit.id);
+        await updateDoc(unitDocRef, formData);
         toast.success("Unidade atualizada!");
       } else {
-        const { error } = await supabase
-          .from("school_units")
-          .insert({
-            ...formData,
-            school_id: schoolData.id,
-          });
-
-        if (error) throw error;
+        await addDoc(collection(db, "school_units"), { ...formData, school_id: schoolId });
         toast.success("Unidade criada!");
       }
-
       setIsDialogOpen(false);
       resetForm();
       fetchUnits();
@@ -135,12 +116,8 @@ export default function Units() {
     if (!confirm("Tem certeza que deseja excluir esta unidade?")) return;
 
     try {
-      const { error } = await supabase
-        .from("school_units")
-        .delete()
-        .eq("id", unitId);
-
-      if (error) throw error;
+      const unitDocRef = doc(db, "school_units", unitId);
+      await deleteDoc(unitDocRef);
       toast.success("Unidade excluída!");
       fetchUnits();
     } catch (error: any) {
@@ -149,16 +126,11 @@ export default function Units() {
   };
 
   const resetForm = () => {
-    setFormData({
-      name: "",
-      address: "",
-      city: "",
-      phone: "",
-    });
+    setFormData({ name: "", address: "", city: "", phone: "" });
     setEditingUnit(null);
   };
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
@@ -178,77 +150,39 @@ export default function Units() {
               Gerencie as unidades da sua escola
             </p>
           </div>
-
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog open={isDialogOpen} onOpenChange={(isOpen) => {
+            setIsDialogOpen(isOpen);
+            if (!isOpen) resetForm();
+          }}>
             <DialogTrigger asChild>
-              <Button onClick={resetForm}>
-                <Plus className="mr-2 h-4 w-4" />
-                Nova Unidade
-              </Button>
+              <Button><Plus className="mr-2 h-4 w-4" />Nova Unidade</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>
-                  {editingUnit ? "Editar Unidade" : "Nova Unidade"}
-                </DialogTitle>
-                <DialogDescription>
-                  Preencha as informações da unidade
-                </DialogDescription>
+                <DialogTitle>{editingUnit ? "Editar Unidade" : "Nova Unidade"}</DialogTitle>
+                <DialogDescription>Preencha as informações da unidade</DialogDescription>
               </DialogHeader>
-
-              <div className="space-y-4">
+              <div className="space-y-4 py-4">
                 <div>
-                  <Label>Nome da Unidade</Label>
-                  <Input
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    placeholder="Ex: Unidade Centro"
-                  />
+                  <Label htmlFor="name">Nome da Unidade</Label>
+                  <Input id="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Ex: Unidade Centro" />
                 </div>
-
                 <div>
-                  <Label>Endereço</Label>
-                  <Input
-                    value={formData.address}
-                    onChange={(e) =>
-                      setFormData({ ...formData, address: e.target.value })
-                    }
-                    placeholder="Rua, número"
-                  />
+                  <Label htmlFor="address">Endereço</Label>
+                  <Input id="address" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} placeholder="Rua, número" />
                 </div>
-
                 <div>
-                  <Label>Cidade</Label>
-                  <Input
-                    value={formData.city}
-                    onChange={(e) =>
-                      setFormData({ ...formData, city: e.target.value })
-                    }
-                    placeholder="Cidade"
-                  />
+                  <Label htmlFor="city">Cidade</Label>
+                  <Input id="city" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} placeholder="Cidade" />
                 </div>
-
                 <div>
-                  <Label>Telefone</Label>
-                  <Input
-                    value={formData.phone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phone: e.target.value })
-                    }
-                    placeholder="(11) 99999-9999"
-                  />
+                  <Label htmlFor="phone">Telefone</Label>
+                  <Input id="phone" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="(11) 99999-9999" />
                 </div>
               </div>
-
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button onClick={handleSubmit}>
-                  {editingUnit ? "Salvar" : "Criar"}
-                </Button>
+                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+                <Button onClick={handleSubmit}>{editingUnit ? "Salvar" : "Criar"}</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -256,9 +190,7 @@ export default function Units() {
 
         {units.length === 0 ? (
           <Card>
-            <CardContent className="py-12 text-center text-muted-foreground">
-              Nenhuma unidade cadastrada ainda
-            </CardContent>
+            <CardContent className="py-12 text-center text-muted-foreground">Nenhuma unidade cadastrada ainda</CardContent>
           </Card>
         ) : (
           <div className="grid gap-6 md:grid-cols-2">
@@ -266,38 +198,17 @@ export default function Units() {
               <Card key={unit.id}>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="h-5 w-5" />
-                      {unit.name}
-                    </div>
+                    <div className="flex items-center gap-2"><Building2 className="h-5 w-5" />{unit.name}</div>
                     <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(unit)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(unit.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleEdit(unit)}><Edit className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(unit.id)}><Trash2 className="h-4 w-4" /></Button>
                     </div>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <p className="text-sm">
-                    <span className="font-medium">Endereço:</span> {unit.address || "-"}
-                  </p>
-                  <p className="text-sm">
-                    <span className="font-medium">Cidade:</span> {unit.city || "-"}
-                  </p>
-                  <p className="text-sm">
-                    <span className="font-medium">Telefone:</span> {unit.phone || "-"}
-                  </p>
+                  <p className="text-sm"><span className="font-medium">Endereço:</span> {unit.address || "-"}</p>
+                  <p className="text-sm"><span className="font-medium">Cidade:</span> {unit.city || "-"}</p>
+                  <p className="text-sm"><span className="font-medium">Telefone:</span> {unit.phone || "-"}</p>
                 </CardContent>
               </Card>
             ))}

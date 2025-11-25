@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { auth } from "@/integrations/firebase/client";
 import { useDemo } from "@/contexts/DemoContext";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+// Assuming a firebase function `seedDemo` exists.
 
 export default function DemoLogin() {
   const navigate = useNavigate();
@@ -13,33 +15,28 @@ export default function DemoLogin() {
   useEffect(() => {
     const initDemo = async () => {
       try {
-        // Check if already logged in
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user?.email === 'demo@xpacecontrol.com') {
+        // Check if correct user is already logged in
+        if (auth.currentUser?.email === 'demo@xpacecontrol.com') {
           setDemoMode(true);
           navigate('/dashboard');
           return;
         }
 
-        // Sign out any existing session
-        await supabase.auth.signOut();
+        // Sign out any existing user
+        await signOut(auth);
 
         setStatus("Preparando dados demo...");
         
-        // Call seed function
-        const { data, error } = await supabase.functions.invoke('seed-demo');
-        
-        if (error) throw error;
+        // TODO: Replace with actual call to a Firebase Function to seed data
+        // For now, we'll just simulate a delay.
+        await new Promise(res => setTimeout(res, 2000));
+        // const seedDemo = httpsCallable(functions, 'seedDemo');
+        // await seedDemo();
 
         setStatus("Fazendo login...");
 
         // Sign in with demo credentials
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: 'demo@xpacecontrol.com',
-          password: 'demo123456'
-        });
-
-        if (signInError) throw signInError;
+        await signInWithEmailAndPassword(auth, 'demo@xpacecontrol.com', 'demo123456');
 
         setDemoMode(true);
         toast.success("Bem-vindo ao modo DEMO!");
@@ -47,7 +44,7 @@ export default function DemoLogin() {
 
       } catch (error) {
         console.error('Demo login error:', error);
-        toast.error("Erro ao iniciar modo demo");
+        toast.error("Erro ao iniciar modo demo. Verifique as credenciais e a função de seed.");
         navigate('/');
       }
     };

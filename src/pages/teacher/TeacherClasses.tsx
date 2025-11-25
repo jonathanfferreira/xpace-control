@@ -3,10 +3,11 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/integrations/firebase/client';
+import { collection, query, where, getDocs, addDoc, doc, getDoc, Timestamp } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
 import { QRCodeSVG } from 'qrcode.react';
-import { QrCode, Users } from 'lucide-react';
+import { QrCode } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Class = {
@@ -22,7 +23,6 @@ export default function TeacherClasses() {
   const { user } = useAuth();
   const [classes, setClasses] = useState<Class[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedClass, setSelectedClass] = useState<string | null>(null);
   const [qrToken, setQrToken] = useState<string | null>(null);
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
 
@@ -33,16 +33,21 @@ export default function TeacherClasses() {
   }, [user]);
 
   const fetchClasses = async () => {
+    if (!user) return;
     try {
-      const { data, error } = await supabase
-        .from('classes')
-        .select('*')
-        .eq('teacher_id', user?.id)
-        .eq('active', true);
-
-      if (error) throw error;
-      setClasses(data || []);
+      const classesQuery = query(
+        collection(db, 'classes'),
+        where('teacher_id', '==', user.uid),
+        where('active', '==', true)
+      );
+      const querySnapshot = await getDocs(classesQuery);
+      const fetchedClasses = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Class[];
+      setClasses(fetchedClasses);
     } catch (error: any) {
+      console.error("Error fetching classes: ", error);
       toast.error('Erro ao carregar turmas');
     } finally {
       setLoading(false);
@@ -50,53 +55,43 @@ export default function TeacherClasses() {
   };
 
   const generateQRCode = async (classId: string) => {
+    if (!user) return;
     try {
-      // Get class schedule to determine time window
-      const { data: classData, error: classError } = await supabase
-        .from('classes')
-        .select('schedule_time')
-        .eq('id', classId)
-        .single();
+      const classDocRef = doc(db, 'classes', classId);
+      const classSnap = await getDoc(classDocRef);
 
-      if (classError) throw classError;
+      if (!classSnap.exists()) {
+        throw new Error("Class not found");
+      }
+      const classData = classSnap.data();
 
       const token = `${classId}-${Date.now()}`;
       
-      // Parse schedule time (format: HH:MM)
       const [hours, minutes] = classData.schedule_time.split(':').map(Number);
       
-      // Create time window: 10 min before class start, 15 min after
       const now = new Date();
       const classStart = new Date(now);
       classStart.setHours(hours, minutes, 0, 0);
       
-      const validFrom = new Date(classStart.getTime() - 10 * 60 * 1000); // -10 min
-      const validUntil = new Date(classStart.getTime() + 15 * 60 * 1000); // +15 min
+      const validFrom = new Date(classStart.getTime() - 10 * 60 * 1000);
+      const validUntil = new Date(classStart.getTime() + 15 * 60 * 1000);
 
-      const { error } = await supabase.from('qr_tokens').insert({
+      await addDoc(collection(db, 'qr_tokens'), {
         token,
         class_id: classId,
-        valid_from: validFrom.toISOString(),
-        valid_until: validUntil.toISOString(),
+        valid_from: Timestamp.fromDate(validFrom),
+        valid_until: Timestamp.fromDate(validUntil),
+        teacher_id: user.uid,
+        created_at: Timestamp.now()
       });
 
-      if (error) throw error;
-
       setQrToken(token);
-      setSelectedClass(classId);
       setQrDialogOpen(true);
       toast.success('QR Code gerado com sucesso (válido por 25 minutos)');
     } catch (error: any) {
+      console.error("Error generating QR code: ", error);
       toast.error('Erro ao gerar QR Code');
     }
-  };
-
-  const getStudentCount = async (classId: string) => {
-    const { count } = await supabase
-      .from('class_students')
-      .select('*', { count: 'exact', head: true })
-      .eq('class_id', classId);
-    return count || 0;
   };
 
   if (loading) {

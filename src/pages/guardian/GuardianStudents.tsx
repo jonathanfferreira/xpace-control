@@ -1,7 +1,9 @@
 import { GuardianLayout } from '@/components/layout/GuardianLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/integrations/firebase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, Calendar, DollarSign } from 'lucide-react';
@@ -20,65 +22,62 @@ interface StudentPoints {
 }
 
 export default function GuardianStudents() {
+  const { user } = useAuth();
   const [students, setStudents] = useState<Student[]>([]);
   const [points, setPoints] = useState<Record<string, StudentPoints>>({});
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchStudents();
-  }, []);
+    if (user) {
+      fetchStudents();
+    }
+  }, [user]);
 
   const fetchStudents = async () => {
+    if (!user) return;
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const guardiansQuery = query(collection(db, 'guardians'), where('user_id', '==', user.uid));
+      const guardianSnapshot = await getDocs(guardiansQuery);
 
-      // Buscar guardian
-      const { data: guardian } = await supabase
-        .from('guardians')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
+      if (guardianSnapshot.empty) {
+        setLoading(false);
+        return;
+      }
+      const guardianId = guardianSnapshot.docs[0].id;
 
-      if (!guardian) return;
+      const studentGuardiansQuery = query(collection(db, 'student_guardians'), where('guardian_id', '==', guardianId));
+      const studentGuardiansSnapshot = await getDocs(studentGuardiansQuery);
 
-      // Buscar alunos vinculados
-      const { data: studentGuardians, error } = await supabase
-        .from('student_guardians')
-        .select(`
-          student_id,
-          students (
-            id,
-            full_name,
-            photo_url,
-            active
-          )
-        `)
-        .eq('guardian_id', guardian.id);
+      if (studentGuardiansSnapshot.empty) {
+        setLoading(false);
+        return;
+      }
 
-      if (error) throw error;
+      const studentPromises = studentGuardiansSnapshot.docs.map(async (sgDoc) => {
+        const studentId = sgDoc.data().student_id;
+        const studentDocRef = doc(db, 'students', studentId);
+        const studentDoc = await getDoc(studentDocRef);
+        return studentDoc.exists() ? { id: studentDoc.id, ...studentDoc.data() } as Student : null;
+      });
 
-      const studentsList = studentGuardians?.map(sg => sg.students).filter(Boolean) as Student[];
+      const studentsList = (await Promise.all(studentPromises)).filter(Boolean) as Student[];
       setStudents(studentsList);
 
-      // Buscar pontos de cada aluno
       for (const student of studentsList) {
-        const { data: pointsData } = await supabase
-          .from('student_points')
-          .select('points')
-          .eq('student_id', student.id);
+        const pointsQuery = query(collection(db, 'student_points'), where('student_id', '==', student.id));
+        const pointsSnapshot = await getDocs(pointsQuery);
+        const totalPoints = pointsSnapshot.docs.reduce((sum, doc) => sum + (doc.data().points || 0), 0);
 
-        const { data: achievementsData } = await supabase
-          .from('student_achievements')
-          .select('id')
-          .eq('student_id', student.id);
+        const achievementsQuery = query(collection(db, 'student_achievements'), where('student_id', '==', student.id));
+        const achievementsSnapshot = await getDocs(achievementsQuery);
+        const totalAchievements = achievementsSnapshot.size;
 
         setPoints(prev => ({
           ...prev,
           [student.id]: {
-            total: pointsData?.reduce((sum, p) => sum + p.points, 0) || 0,
-            achievements: achievementsData?.length || 0
+            total: totalPoints,
+            achievements: totalAchievements
           }
         }));
       }

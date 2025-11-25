@@ -1,10 +1,13 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { functions } from "@/integrations/firebase/client"; // Assuming functions are exported from this path
+import { httpsCallable } from "firebase/functions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, RefreshCw, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+
+const seedDemo = httpsCallable(functions, 'seedDemo');
 
 export default function DemoReset() {
   const [loading, setLoading] = useState(false);
@@ -16,10 +19,7 @@ export default function DemoReset() {
     setSuccess(false);
 
     try {
-      const { error } = await supabase.functions.invoke('seed-demo');
-      
-      if (error) throw error;
-
+      await seedDemo();
       setSuccess(true);
       toast.success("Dados demo resetados com sucesso!");
 

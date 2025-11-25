@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { db, functions } from "@/integrations/firebase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { httpsCallable } from "firebase/functions";
+import { collection, query, where, getDocs, addDoc, doc, getDoc, orderBy, Timestamp } from "firebase/firestore";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,16 +11,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Calendar, QrCode, Download } from "lucide-react";
-import type { Database } from "@/integrations/supabase/types";
 import { useDemo } from "@/contexts/DemoContext";
 
-type Attendance = Database["public"]["Tables"]["attendances"]["Row"] & {
+interface Attendance {
+  id: string;
+  marked_at: Timestamp;
   students?: { full_name: string };
   classes?: { name: string };
-};
+}
 
 export default function Attendance() {
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const { isDemoMode } = useDemo();
   const [attendances, setAttendances] = useState<Attendance[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,32 +32,51 @@ export default function Attendance() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
 
   useEffect(() => {
-    checkAuth();
-    fetchAttendances();
-  }, [selectedDate]);
-
-  const checkAuth = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    if (!authLoading && !user) {
       navigate("/auth");
     }
-  };
+    if(user){
+      fetchAttendances();
+    }
+  }, [selectedDate, user, authLoading, navigate]);
+
 
   const fetchAttendances = async () => {
+    if (!user) return;
     try {
-      const { data, error } = await supabase
-        .from("attendances")
-        .select(`
-          *,
-          students(full_name),
-          classes(name)
-        `)
-        .eq("attendance_date", selectedDate)
-        .order("marked_at", { ascending: false });
+      setLoading(true);
+      const attendanceQuery = query(
+        collection(db, "attendances"),
+        where("attendance_date", "==", selectedDate),
+        orderBy("marked_at", "desc")
+      );
 
-      if (error) throw error;
-      setAttendances(data || []);
+      const querySnapshot = await getDocs(attendanceQuery);
+      const attendanceData = await Promise.all(querySnapshot.docs.map(async (docSnap) => {
+        const attendance = docSnap.data();
+        let studentName = 'Aluno não encontrado';
+        let className = 'Turma não encontrada';
+
+        if (attendance.student_id) {
+          const studentDoc = await getDoc(doc(db, 'students', attendance.student_id));
+          if (studentDoc.exists()) studentName = studentDoc.data().full_name;
+        }
+        if (attendance.class_id) {
+          const classDoc = await getDoc(doc(db, 'classes', attendance.class_id));
+          if (classDoc.exists()) className = classDoc.data().name;
+        }
+        
+        return {
+          id: docSnap.id,
+          ...attendance,
+          students: { full_name: studentName },
+          classes: { name: className },
+        } as Attendance;
+      }));
+
+      setAttendances(attendanceData);
     } catch (error: any) {
+      console.error(error);
       toast.error("Erro ao carregar presenças");
     } finally {
       setLoading(false);
@@ -60,43 +84,34 @@ export default function Attendance() {
   };
 
   const handleMarkAttendance = async () => {
+    if (!user) return;
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const classesQuery = query(collection(db, "classes"), where("qr_code", "==", qrInput.trim()));
+      const classSnapshot = await getDocs(classesQuery);
 
-      // Find class by QR code
-      const { data: classData, error: classError } = await supabase
-        .from("classes")
-        .select("id")
-        .eq("qr_code", qrInput.trim())
-        .single();
-
-      if (classError || !classData) {
+      if (classSnapshot.empty) {
         toast.error("QR Code inválido");
         return;
       }
+      const classData = classSnapshot.docs[0];
 
-      // Get first student of user (simplified for MVP)
-      const { data: studentData } = await supabase
-        .from("students")
-        .select("id")
-        .eq("parent_id", user.id)
-        .limit(1)
-        .single();
+      // This logic is based on the original implementation, assuming a parent user is marking attendance.
+      const studentsQuery = query(collection(db, "students"), where("parent_id", "==", user.uid));
+      const studentSnapshot = await getDocs(studentsQuery);
 
-      if (!studentData) {
-        toast.error("Nenhum aluno encontrado");
+      if (studentSnapshot.empty) {
+        toast.error("Nenhum aluno vinculado a este usuário foi encontrado.");
         return;
       }
+      const studentData = studentSnapshot.docs[0]; // Taking the first student found
 
-      const { error } = await supabase.from("attendances").insert({
+      await addDoc(collection(db, "attendances"), {
         class_id: classData.id,
         student_id: studentData.id,
         attendance_date: selectedDate,
-        marked_by: user.id,
+        marked_by: user.uid,
+        marked_at: new Date(),
       });
-
-      if (error) throw error;
 
       toast.success("Presença marcada com sucesso!");
       setIsQRDialogOpen(false);
@@ -115,28 +130,14 @@ export default function Attendance() {
 
     setExporting(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/export-report`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ reportType: "attendances" }),
-        }
-      );
-
-      if (!response.ok) throw new Error("Erro ao exportar");
-
-      const blob = await response.blob();
+      const exportReportFunc = httpsCallable(functions, 'exportReport');
+      const result: any = await exportReportFunc({ reportType: 'attendances', filters: { date: selectedDate } });
+      
+      const blob = new Blob([result.data], { type: 'text/csv;charset=utf-8;' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `relatorio_presencas_${new Date().toISOString().split("T")[0]}.csv`;
+      a.download = `relatorio_presencas_${selectedDate}.csv`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -144,18 +145,17 @@ export default function Attendance() {
 
       toast.success("Relatório exportado com sucesso!");
     } catch (error) {
+      console.error(error)
       toast.error("Erro ao exportar relatório");
     } finally {
       setExporting(false);
     }
   };
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
+        <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>
       </DashboardLayout>
     );
   }
@@ -163,93 +163,54 @@ export default function Attendance() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold">Presenças</h1>
             <p className="text-muted-foreground">Gerencie a presença dos alunos</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleExport} disabled={exporting}>
-              <Download className="h-4 w-4 mr-2" />
-              {exporting ? "Exportando..." : "Exportar CSV"}
-            </Button>
-            <Button className="gradient-xpace" onClick={() => setIsQRDialogOpen(true)}>
-              <QrCode className="h-4 w-4 mr-2" />
-              Marcar Presença
-            </Button>
+            <Button variant="outline" onClick={handleExport} disabled={exporting}><Download className="h-4 w-4 mr-2" />{exporting ? "Exportando..." : "Exportar CSV"}</Button>
+            <Button onClick={() => setIsQRDialogOpen(true)}><QrCode className="h-4 w-4 mr-2" />Marcar Presença</Button>
           </div>
         </div>
 
-        {/* Date Selector */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Selecionar Data
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="max-w-xs"
-            />
-          </CardContent>
+          <CardHeader><CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5" />Selecionar Data</CardTitle></CardHeader>
+          <CardContent><Input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="max-w-xs" /></CardContent>
         </Card>
 
-        {/* Attendances List */}
         <Card>
-          <CardHeader>
-            <CardTitle>Presenças do Dia</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Presenças do Dia</CardTitle></CardHeader>
           <CardContent>
             {attendances.length > 0 ? (
               <div className="space-y-3">
                 {attendances.map((attendance) => (
-                  <div
-                    key={attendance.id}
-                    className="flex items-center justify-between p-4 border rounded-lg"
-                  >
+                  <div key={attendance.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div>
                       <p className="font-medium">{attendance.students?.full_name}</p>
                       <p className="text-sm text-muted-foreground">{attendance.classes?.name}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm text-muted-foreground">
-                        {new Date(attendance.marked_at).toLocaleTimeString("pt-BR")}
+                        {attendance.marked_at ? attendance.marked_at.toDate().toLocaleTimeString("pt-BR") : ''}
                       </p>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-center text-muted-foreground py-8">
-                Nenhuma presença registrada nesta data
-              </p>
+              <p className="text-center text-muted-foreground py-8">Nenhuma presença registrada nesta data</p>
             )}
           </CardContent>
         </Card>
 
-        {/* QR Scanner Dialog */}
         <Dialog open={isQRDialogOpen} onOpenChange={setIsQRDialogOpen}>
           <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Marcar Presença via QR Code</DialogTitle>
-            </DialogHeader>
+            <DialogHeader><DialogTitle>Marcar Presença via QR Code</DialogTitle></DialogHeader>
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Digite ou escaneie o código QR da turma
-              </p>
-              <Input
-                value={qrInput}
-                onChange={(e) => setQrInput(e.target.value)}
-                placeholder="Cole o código aqui"
-              />
-              <Button onClick={handleMarkAttendance} className="w-full gradient-xpace">
-                Confirmar Presença
-              </Button>
+              <p className="text-sm text-muted-foreground">Digite ou escaneie o código QR da turma</p>
+              <Input value={qrInput} onChange={(e) => setQrInput(e.target.value)} placeholder="Cole o código aqui" />
+              <Button onClick={handleMarkAttendance} className="w-full">Confirmar Presença</Button>
             </div>
           </DialogContent>
         </Dialog>

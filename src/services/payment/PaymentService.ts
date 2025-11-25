@@ -1,12 +1,16 @@
 import { IPaymentProvider, PaymentProvider } from './types';
 import { MockProvider } from './MockProvider';
 import { AsaasSandboxProvider } from './AsaasSandboxProvider';
+import { AsaasProductionProvider } from './AsaasProductionProvider'; // Importa o novo provedor
 
 export class PaymentService {
   private provider: IPaymentProvider;
 
   constructor(providerType: PaymentProvider = 'MOCK', apiKey?: string) {
     switch (providerType) {
+      case 'ASAAS_PRODUCTION': // Adiciona o case para produção
+        this.provider = new AsaasProductionProvider(apiKey);
+        break;
       case 'ASAAS_SANDBOX':
         this.provider = new AsaasSandboxProvider(apiKey);
         break;

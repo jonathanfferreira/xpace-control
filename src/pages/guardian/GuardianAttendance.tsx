@@ -1,8 +1,9 @@
 import { GuardianLayout } from '@/components/layout/GuardianLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Calendar, CheckCircle2, XCircle } from 'lucide-react';
+import { db } from '@/integrations/firebase/client';
+import { collection, query, where, getDocs, doc, getDoc, orderBy } from 'firebase/firestore';
+import { Calendar, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -33,32 +34,40 @@ export default function GuardianAttendance() {
       
       if (!studentId) return;
 
-      // Buscar nome do aluno
-      const { data: studentData } = await supabase
-        .from('students')
-        .select('full_name')
-        .eq('id', studentId)
-        .single();
+      // Fetch student's name
+      const studentDocRef = doc(db, "students", studentId);
+      const studentDocSnap = await getDoc(studentDocRef);
 
-      if (studentData) setStudentName(studentData.full_name);
+      if (studentDocSnap.exists()) {
+        setStudentName(studentDocSnap.data().full_name);
+      }
 
-      // Buscar presenças
-      const { data, error } = await supabase
-        .from('attendances')
-        .select(`
-          id,
-          attendance_date,
-          notes,
-          classes (
-            name
-          )
-        `)
-        .eq('student_id', studentId)
-        .order('attendance_date', { ascending: false })
-        .limit(50);
+      // Fetch attendances
+      const attendancesCollectionRef = collection(db, "attendances");
+      const q = query(attendancesCollectionRef, where("student_id", "==", studentId), orderBy("attendance_date", "desc"));
+      
+      const querySnapshot = await getDocs(q);
+      
+      const attendanceData = await Promise.all(querySnapshot.docs.map(async (doc) => {
+        const attendance = doc.data();
+        let className = 'Aula';
 
-      if (error) throw error;
-      setAttendances(data || []);
+        if (attendance.class_id) {
+          const classDocRef = doc(db, "classes", attendance.class_id);
+          const classDocSnap = await getDoc(classDocRef);
+          if (classDocSnap.exists()) {
+            className = classDocSnap.data().name;
+          }
+        }
+
+        return {
+          id: doc.id,
+          ...attendance,
+          classes: { name: className },
+        } as Attendance;
+      }));
+
+      setAttendances(attendanceData || []);
     } catch (error) {
       console.error('Error fetching attendances:', error);
       toast({

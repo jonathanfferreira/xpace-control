@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/integrations/firebase/client';
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
@@ -28,37 +29,53 @@ export default function TeacherSchedule() {
   }, [user]);
 
   const fetchSchedules = async () => {
+    if (!user) return;
     try {
-      const { data: teacherClasses, error: classesError } = await supabase
-        .from('classes')
-        .select('id')
-        .eq('teacher_id', user?.id);
-
-      if (classesError) throw classesError;
-
-      const classIds = teacherClasses?.map((c) => c.id) || [];
+      setLoading(true);
+      // Get teacher's classes
+      const classesQuery = query(collection(db, 'classes'), where('teacher_id', '==', user.id));
+      const classesSnapshot = await getDocs(classesQuery);
+      
+      const classIds = classesSnapshot.docs.map(doc => doc.id);
+      const classesMap = new Map();
+      classesSnapshot.docs.forEach(doc => {
+        classesMap.set(doc.id, doc.data());
+      });
 
       if (classIds.length === 0) {
         setSchedules([]);
-        setLoading(false);
         return;
       }
 
-      const { data, error } = await supabase
-        .from('class_schedules')
-        .select('*, classes (name, description)')
-        .in('class_id', classIds)
-        .order('day_of_week', { ascending: true })
-        .order('start_time', { ascending: true });
+      // Get schedules for those classes
+      const schedulesQuery = query(
+        collection(db, 'class_schedules'),
+        where('class_id', 'in', classIds),
+        orderBy('day_of_week'),
+        orderBy('start_time')
+      );
+      const schedulesSnapshot = await getDocs(schedulesQuery);
+      
+      const schedulesData = schedulesSnapshot.docs.map(doc => {
+        const schedule = doc.data();
+        const classInfo = classesMap.get(schedule.class_id);
+        return {
+          id: doc.id,
+          ...schedule,
+          classes: classInfo ? { name: classInfo.name, description: classInfo.description } : null,
+        } as ClassSchedule;
+      });
 
-      if (error) throw error;
-      setSchedules(data || []);
+      setSchedules(schedulesData);
+
     } catch (error: any) {
+      console.error('Erro ao carregar agenda:', error);
       toast.error('Erro ao carregar agenda');
     } finally {
       setLoading(false);
     }
   };
+
 
   const groupedSchedules = schedules.reduce((acc, schedule) => {
     const day = schedule.day_of_week;
