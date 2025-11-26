@@ -2,11 +2,17 @@
 import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
 import { onCall } from 'firebase-functions/v2/https';
+// Importa o 'defineSecret' para acessar o Google Secret Manager
+import { defineSecret } from 'firebase-functions/params';
 
 admin.initializeApp();
 
 import { inviteStaffMember } from './authService';
 import { AsaasServerService } from './AsaasServerService';
+
+// Define o secret que armazenamos no passo anterior.
+// A Cloud Function agora sabe que precisa de acesso a este segredo para ser implantada.
+const asaasApiKey = defineSecret('ASAAS_API_KEY');
 
 // ====================================================================
 // 1. FUNÇÃO DE CONVITE DE STAFF (Callable)
@@ -31,7 +37,8 @@ export const inviteStaff = onCall(async (request) => {
 // ====================================================================
 // 2. FUNÇÃO DE CRIAÇÃO DE COBRANÇA NA ASAAS (Callable)
 // ====================================================================
-export const createAsaasCharge = onCall(async (request) => {
+// Adicionamos a opção { secrets: [asaasApiKey] } para dar à função acesso ao segredo.
+export const createAsaasCharge = onCall({ secrets: [asaasApiKey] }, async (request) => {
     // Validação de autenticação
     if (!request.auth) {
         throw new functions.https.HttpsError('unauthenticated', 'Você precisa estar logado para criar uma cobrança.');
@@ -44,17 +51,13 @@ export const createAsaasCharge = onCall(async (request) => {
     }
 
     try {
-        // CORREÇÃO DEFINITIVA:
-        // 1. Buscamos a chave da API a partir da configuração de runtime do Firebase.
-        // 2. Verificamos se a chave existe ANTES de instanciar o serviço.
-        //    Durante a análise do deploy, `functions.config().asaas` pode não existir,
-        //    então esta verificação impede que o construtor seja chamado e lance um erro.
-        const apiKey = functions.config().asaas?.key;
+        // Acessamos o valor do segredo de forma segura com .value()
+        const apiKey = asaasApiKey.value();
 
         if (!apiKey) {
-            // Se a chave não estiver configurada, a função falhará em tempo de execução,
-            // mas o deploy não será interrompido.
-            console.error("Erro Crítico: A chave da API da Asaas não foi encontrada na configuração do Firebase.");
+            // Esta verificação agora é uma camada extra de segurança.
+            // O deploy já falharia se o segredo não fosse encontrado.
+            console.error("Erro Crítico: O segredo ASAAS_API_KEY não está disponível.");
             throw new functions.https.HttpsError('internal', 'Erro de configuração do servidor. Contate o administrador.');
         }
 

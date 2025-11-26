@@ -12,7 +12,7 @@ import { UnitProvider } from "@/contexts/UnitContext";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { DemoBadge } from "@/components/DemoBadge";
-import { initGA4, initMetaPixel, trackPageView } from "@/lib/analytics";
+import { initGA4, trackPageView } from "@/lib/analytics";
 import { SchoolThemeProvider } from "@/contexts/SchoolThemeContext";
 
 // Importando Layouts
@@ -81,7 +81,6 @@ function AnalyticsTracker() {
 
   useEffect(() => {
     initGA4();
-    initMetaPixel();
   }, []);
 
   useEffect(() => {
@@ -103,7 +102,7 @@ const App = () => (
                   <Toaster />
                   <Sonner />
                   <DemoBadge />
-                  <BrowserRouter>
+                  <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                     <AnalyticsTracker />
                     <Routes>
                       {/* Rotas Públicas */}

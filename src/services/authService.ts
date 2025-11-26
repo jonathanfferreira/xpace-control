@@ -1,6 +1,6 @@
 
 import { auth, db } from "@/integrations/firebase/client";
-import { GoogleAuthProvider, signInWithPopup, signOut, User } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, signOut, User, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
 
 // Define a structure for our user profile
@@ -14,6 +14,30 @@ export interface UserProfile {
 }
 
 const googleProvider = new GoogleAuthProvider();
+
+export const login = async (email, password) => {
+  return signInWithEmailAndPassword(auth, email, password);
+};
+
+export const signup = async (email, password, fullName) => {
+  const result = await createUserWithEmailAndPassword(auth, email, password);
+  const user = result.user;
+
+  const userRef = doc(db, "users", user.uid);
+  const userSnap = await getDoc(userRef);
+
+  if (!userSnap.exists()) {
+    const newUserProfile: UserProfile = {
+      uid: user.uid,
+      email: user.email,
+      displayName: fullName,
+      photoURL: user.photoURL,
+      role: "student",
+    };
+    await setDoc(userRef, newUserProfile);
+    return newUserProfile;
+  }
+};
 
 /**
  * Handles the Google Sign-In process.

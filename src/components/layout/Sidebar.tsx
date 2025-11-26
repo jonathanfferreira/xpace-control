@@ -39,11 +39,32 @@ const teacherNavItems = [
   { href: "/professor/agenda", icon: Calendar, label: "Minha Agenda" },
 ];
 
+const studentNavItems = [
+    { href: "/aluno/dashboard", icon: LayoutGrid, label: "Meu Painel" },
+    { href: "/aluno/turmas", icon: School, label: "Minhas Turmas" },
+    { href: "/aluno/avaliacoes", icon: BookOpen, label: "Minhas Avaliações" },
+    { href: "/aluno/financeiro", icon: DollarSign, label: "Meu Financeiro" },
+    { href: "/aluno/agenda", icon: Calendar, label: "Agenda" },
+];
+
+const getNavItems = (role) => {
+    switch (role) {
+        case 'admin':
+            return adminNavItems;
+        case 'teacher':
+            return teacherNavItems;
+        case 'student':
+            return studentNavItems;
+        default:
+            return [];
+    }
+};
+
 export const Sidebar = ({ className }) => {
   const { user, logout } = useAuth(); 
   const location = useLocation();
 
-  const navItems = user?.role === 'admin' ? adminNavItems : teacherNavItems;
+  const navItems = getNavItems(user?.role);
 
   return (
     <div className={cn("h-full bg-background border-r flex flex-col", className)}>

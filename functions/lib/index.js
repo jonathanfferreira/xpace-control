@@ -2,13 +2,16 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createAsaasCharge = exports.inviteStaff = void 0;
 const admin = require("firebase-admin");
-const functions = require("firebase-functions"); // <-- ADICIONADO
+const functions = require("firebase-functions");
 const https_1 = require("firebase-functions/v2/https");
+// Importa o 'defineSecret' para acessar o Google Secret Manager
+const params_1 = require("firebase-functions/params");
 admin.initializeApp();
-// Importando os serviços que vamos usar
 const authService_1 = require("./authService");
-// CORREÇÃO: O nome da classe importada deve ser o mesmo do arquivo.
-const AsaasServerService_1 = require("./AsaasServerService"); // <-- CORRIGIDO
+const AsaasServerService_1 = require("./AsaasServerService");
+// Define o secret que armazenamos no passo anterior.
+// A Cloud Function agora sabe que precisa de acesso a este segredo para ser implantada.
+const asaasApiKey = (0, params_1.defineSecret)('ASAAS_API_KEY');
 // ====================================================================
 // 1. FUNÇÃO DE CONVITE DE STAFF (Callable)
 // ====================================================================
@@ -32,22 +35,36 @@ exports.inviteStaff = (0, https_1.onCall)(async (request) => {
 // ====================================================================
 // 2. FUNÇÃO DE CRIAÇÃO DE COBRANÇA NA ASAAS (Callable)
 // ====================================================================
-// Inicializa o serviço da Asaas com a chave de API
-const asaasService = new AsaasServerService_1.AsaasServerService(process.env.ASAAS_API_KEY || ''); // <-- CORRIGIDO
-exports.createAsaasCharge = (0, https_1.onCall)(async (request) => {
+// Adicionamos a opção { secrets: [asaasApiKey] } para dar à função acesso ao segredo.
+exports.createAsaasCharge = (0, https_1.onCall)({ secrets: [asaasApiKey] }, async (request) => {
+    // Validação de autenticação
     if (!request.auth) {
         throw new functions.https.HttpsError('unauthenticated', 'Você precisa estar logado para criar uma cobrança.');
     }
+    // Validação de dados
     const { studentData, planData } = request.data;
     if (!studentData || !planData) {
         throw new functions.https.HttpsError('invalid-argument', 'Dados do aluno ou do plano ausentes.');
     }
     try {
+        // Acessamos o valor do segredo de forma segura com .value()
+        const apiKey = asaasApiKey.value();
+        if (!apiKey) {
+            // Esta verificação agora é uma camada extra de segurança.
+            // O deploy já falharia se o segredo não fosse encontrado.
+            console.error("Erro Crítico: O segredo ASAAS_API_KEY não está disponível.");
+            throw new functions.https.HttpsError('internal', 'Erro de configuração do servidor. Contate o administrador.');
+        }
+        const asaasService = new AsaasServerService_1.AsaasServerService(apiKey);
         const charge = await asaasService.createCharge(studentData, planData);
         return { success: true, charge };
     }
     catch (error) {
         console.error("Erro ao criar cobrança na Asaas:", error);
+        // Evita expor detalhes do erro para o cliente.
+        if (error instanceof functions.https.HttpsError) {
+            throw error;
+        }
         throw new functions.https.HttpsError('internal', 'Falha ao gerar cobrança na Asaas.');
     }
 });

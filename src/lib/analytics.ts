@@ -1,16 +1,14 @@
-// Analytics utilities for GA4 and Meta Pixel
+// Analytics utilities for GA4
 
 declare global {
   interface Window {
     gtag?: (...args: any[]) => void;
     dataLayer?: any[];
-    fbq?: (...args: any[]) => void;
   }
 }
 
 // GA4 Configuration
 const GA4_ID = import.meta.env.VITE_GA4_ID || '';
-const META_PIXEL_ID = import.meta.env.VITE_META_PIXEL_ID || '';
 
 // Initialize GA4
 export const initGA4 = () => {
@@ -32,51 +30,11 @@ export const initGA4 = () => {
   window.gtag('config', GA4_ID);
 };
 
-// Initialize Meta Pixel
-export const initMetaPixel = () => {
-  if (!META_PIXEL_ID) {
-    console.warn('META_PIXEL_ID not configured');
-    return;
-  }
-
-  /* eslint-disable */
-  (function (f: any, b: any, e: any, v: any) {
-    let n: any, t: any, s: any;
-    if (f.fbq) return;
-    n = f.fbq = function () {
-      n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
-    };
-    if (!f._fbq) f._fbq = n;
-    n.push = n;
-    n.loaded = true;
-    n.version = '2.0';
-    n.queue = [];
-    t = b.createElement(e);
-    t.async = true;
-    t.src = v;
-    s = b.getElementsByTagName(e)[0];
-    if (s && s.parentNode) {
-      s.parentNode.insertBefore(t, s);
-    }
-  })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
-  /* eslint-enable */
-
-  if (window.fbq) {
-    window.fbq('init', META_PIXEL_ID);
-    window.fbq('track', 'PageView');
-  }
-};
-
 // Event tracking functions
 export const trackEvent = (eventName: string, params?: Record<string, any>) => {
   // GA4
   if (window.gtag) {
     window.gtag('event', eventName, params);
-  }
-
-  // Meta Pixel
-  if (window.fbq) {
-    window.fbq('trackCustom', eventName, params);
   }
 
   // Console log for development
@@ -90,11 +48,6 @@ export const trackSignupCompleted = (userId: string, email: string) => {
     email,
     method: 'email',
   });
-
-  // Meta Pixel specific event
-  if (window.fbq) {
-    window.fbq('track', 'CompleteRegistration');
-  }
 };
 
 export const trackClassCreated = (classId: string, className: string) => {
@@ -117,14 +70,6 @@ export const trackPaymentGenerated = (amount: number, studentId: string) => {
     currency: 'BRL',
     student_id: studentId,
   });
-
-  // Meta Pixel specific event
-  if (window.fbq) {
-    window.fbq('track', 'InitiateCheckout', {
-      value: amount,
-      currency: 'BRL',
-    });
-  }
 };
 
 export const trackReportExport = (reportType: string) => {

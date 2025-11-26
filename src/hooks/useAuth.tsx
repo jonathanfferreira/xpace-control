@@ -1,13 +1,15 @@
 
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { User } from 'firebase/auth';
-import { onAuthStateChanged, getUserProfile, UserProfile } from '@/services/authService';
+import { onAuthStateChanged, getUserProfile, UserProfile, login, signup } from '@/services/authService';
 
 interface AuthContextType {
   user: User | null;
   userProfile: UserProfile | null;
   loading: boolean;
   isAdmin: boolean;
+  login: typeof login;
+  signup: typeof signup;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -42,6 +44,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     userProfile,
     loading,
     isAdmin,
+    login,
+    signup,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,3 +1,4 @@
+
 # ✅ Plano de Batalha: XPACE OS 🚀
 
 Este documento é o nosso mapa para transformar o XPACE OS em um produto completo e vendável. Ele é baseado na visão estratégica, dividida em pilares e fases.
@@ -9,7 +10,7 @@ Este documento é o nosso mapa para transformar o XPACE OS em um produto complet
 O objetivo é tornar o sistema 100% funcional para a sua própria escola. Se funcionar para você, o produto está validado.
 
 ### Pilar 1: Gestão Invisível (O \"Feijão com Arroz\" Perfeito)
-- **[x] Autenticação Completa**
+- **[x] Autenticação Completa (Firebase Configurado)**
 - **[x] Gestão de Alunos (CRUD Completo)**
 - **[x] Gestão de Turmas (CRUD Completo)**
 - **[x] Lista de Chamada Digital**
@@ -45,8 +46,8 @@ Depois de validar internamente, preparamos o sistema para ser vendido a outras e
 - **[x] Onboarding de Novas Escolas**
 - **[x] Ferramentas de Migração de Dados**
 
-- **[⏸️] Ativar Pagamentos Reais:**
-  - `[ ] **PENDENTE:** Fazer o upgrade do Firebase para o plano Blaze.`
+- **[▶️] Ativar Pagamentos Reais:**
+  - `[x] Fazer o upgrade do Firebase para o plano Blaze.`
   - `[ ] **PENDENTE (DEPLOY):** Fazer o deploy da Cloud Function de convite de Staff.`
   - `[ ] **PENDENTE:** Fazer o deploy da Cloud Function que se comunica com a Asaas.`
   - `[ ] **PENDENTE:** Substituir o \`asaasMock.ts\` pela chamada real ao \`AsaasServerService.ts\`.`
